@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Curs Studio OG Image">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#157a8a" />
+      <stop offset="100%" stop-color="#0b3f47" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <circle cx="1020" cy="120" r="180" fill="#2ba3b4" opacity="0.22" />
+  <rect x="72" y="82" width="1056" height="466" rx="32" fill="#ffffff" opacity="0.95" />
+  <text x="120" y="260" font-size="78" font-weight="700" font-family="Arial, sans-serif" fill="#114f58">Curs Studio</text>
+  <text x="120" y="330" font-size="34" font-family="Arial, sans-serif" fill="#1b5f68">Content studio for course creators</text>
+</svg>

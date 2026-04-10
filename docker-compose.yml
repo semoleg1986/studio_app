@@ -1,0 +1,12 @@
+services:
+  studio_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: curs_studio_app
+    restart: unless-stopped
+    environment:
+      NUXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      NUXT_PUBLIC_SITE_URL: http://localhost:3002
+    ports:
+      - "3002:3000"
