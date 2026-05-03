@@ -7,7 +7,9 @@ export default defineNuxtConfig({
     preset: "node-server"
   },
   runtimeConfig: {
+    authServiceBaseUrl: "http://localhost:8000",
     public: {
+      apiBaseUrl: "/api",
       appName: "Curs Studio",
       siteUrl: "http://localhost:3002"
     }
