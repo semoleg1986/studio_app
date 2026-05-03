@@ -52,11 +52,9 @@
 </template>
 
 <script setup lang="ts">
-import type { LocaleCode } from "~/shared/lib/preferences/types";
-import { usePreferences } from "~/shared/lib/preferences/use-preferences";
+import { usePreferencesSettings } from "~/features/preferences-settings/model/use-preferences-settings";
 
-const locales: LocaleCode[] = ["ru", "en"];
-const { locale, themeMode, setLocale, setThemeMode, t } = usePreferences();
+const { locale, locales, setLocale, setThemeMode, t, themeMode } = usePreferencesSettings();
 </script>
 
 <style scoped>
