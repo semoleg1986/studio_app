@@ -1,56 +1,46 @@
-# studio_app (Nuxt 3)
+# studio_app
 
-Минимальный frontend на Vue + Nitro.
+Internal studio UI built on Nuxt 3.
 
-## Архитектурный паттерн
+## Responsibility
 
-- `src/app`: глобальная инициализация/стили.
-- `src/pages`: route-страницы.
-- `src/features`: бизнес-фичи (`model/api/ui`).
-- `src/shared`: UI, lib, api, types.
-- `src/server`: Nitro handlers.
+`studio_app` is the internal web surface for studio/content workflows.
 
-Подробно: `docs/ARCHITECTURE.md`.
+## Local run
 
-## UI Preferences
-
-- Переключатель языка и темы находится на странице `/settings`.
-- Footer содержит ссылку на настройки.
-- Год в footer подставляется динамически.
-
-## PWA и SEO
-
-- `manifest.webmanifest` и PWA-иконки: `public/manifest.webmanifest`, `public/icons/*`.
-- SEO/PWA meta подключены глобально в `src/app.vue`.
-- `robots.txt` отдается как `Disallow: /` (приложение закрыто от индексации).
-- Meta robots/googlebot: `noindex, nofollow, noarchive, nosnippet`.
-
-## Локальный запуск
 ```bash
 npm install
 npm run dev
 ```
 
-Откроется на `http://localhost:3002`.
+App URL:
+- [http://localhost:3002](http://localhost:3002)
 
-## Тесты
+## Environment
+
+- [studio_app/.env.example](/Users/olegsemenov/Programming/curs/studio_app/.env.example)
+- [studio_app/.env.local.example](/Users/olegsemenov/Programming/curs/studio_app/.env.local.example)
+
+Key variables:
+- `NUXT_AUTH_SERVICE_BASE_URL`
+- `NUXT_PUBLIC_API_BASE_URL`
+- `NUXT_PUBLIC_SITE_URL`
+
+## Tests and quality
+
 ```bash
 npm test
-```
-
-## Lint и Format
-```bash
 npm run lint
 npm run format:check
 ```
 
-Автоисправление:
+## Build
+
 ```bash
-npm run lint:fix
-npm run format
+npm run build
+npm run start
 ```
 
-## Docker
-```bash
-docker compose -f docker-compose.yml up -d --build
-```
+## Documentation
+
+- [docs/ARCHITECTURE.md](/Users/olegsemenov/Programming/curs/studio_app/docs/ARCHITECTURE.md)
