@@ -1,10 +1,17 @@
+import { fileURLToPath } from "node:url";
+
 export default defineNuxtConfig({
   ssr: true,
   srcDir: "src/",
   css: ["~/app/styles/main.css"],
   devtools: { enabled: false },
   nitro: {
-    preset: "node-server"
+    preset: "node-server",
+    publicAssets: [
+      {
+        dir: fileURLToPath(new URL("./public", import.meta.url))
+      }
+    ]
   },
   runtimeConfig: {
     authServiceBaseUrl: "http://localhost:8000",
