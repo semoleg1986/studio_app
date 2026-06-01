@@ -18,7 +18,7 @@ import HeroBanner from "~/shared/ui/hero-banner/HeroBanner.vue";
 import { useHomePage } from "~/widgets/home-page/model/use-home-page";
 
 const { courses, coursesErrorMessage, coursesPending, refreshCourses, status, t, total } =
-  await useHomePage();
+  useHomePage();
 </script>
 
 <style scoped>

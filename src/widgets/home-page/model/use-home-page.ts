@@ -3,7 +3,7 @@ import { useHealthQuery } from "~/shared/api/health";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
 import { buildCourseTitle } from "~/shared/lib/seo/build-course-title";
 
-export async function useHomePage() {
+export function useHomePage() {
   const { t } = usePreferences();
 
   const title = computed(() => buildCourseTitle(t("page.hero.title")));
@@ -15,9 +15,9 @@ export async function useHomePage() {
     ogDescription: "Студия создания контента образовательной платформы."
   });
 
-  const { data: health } = await useHealthQuery();
+  const { data: health } = useHealthQuery();
   const status = computed(() => (health.value?.ok ? "ok" : "degraded"));
-  const { apiError, courses, pending, refresh, total } = await useCourseCatalog();
+  const { apiError, courses, pending, refresh, total } = useCourseCatalog();
   const coursesErrorMessage = computed(() => apiError.value?.statusMessage ?? "");
 
   return {

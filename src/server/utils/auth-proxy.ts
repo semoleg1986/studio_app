@@ -24,8 +24,8 @@ interface AuthMeResponse {
   status: "active" | "blocked" | "archived";
 }
 
-function authServiceBaseUrl() {
-  const runtimeConfig = useRuntimeConfig();
+function authServiceBaseUrl(event: H3Event) {
+  const runtimeConfig = useRuntimeConfig(event);
 
   return String(
     runtimeConfig.authServiceBaseUrl || runtimeConfig.public.apiBaseUrl || "http://localhost:8000"
@@ -72,7 +72,7 @@ export async function exchangeRefreshToken(event: H3Event) {
   const headers = new Headers({ "Content-Type": "application/json" });
   forwardTracingHeaders(event, headers);
 
-  const response = await fetch(`${authServiceBaseUrl()}/v1/auth/refresh`, {
+  const response = await fetch(`${authServiceBaseUrl(event)}/v1/auth/refresh`, {
     body: JSON.stringify({ refresh_token: refreshToken }),
     headers,
     method: "POST"
@@ -111,7 +111,7 @@ export async function proxyLogin(event: H3Event) {
         }
       : body;
 
-  const response = await fetch(`${authServiceBaseUrl()}/v1/auth/login`, {
+  const response = await fetch(`${authServiceBaseUrl(event)}/v1/auth/login`, {
     body: JSON.stringify(payload),
     headers,
     method: "POST"
@@ -159,7 +159,7 @@ export async function proxyMe(event: H3Event): Promise<AuthMeResponse | Record<s
 
   headers.set("Authorization", `Bearer ${accessToken}`);
 
-  let response = await fetch(`${authServiceBaseUrl()}/v1/auth/me`, {
+  let response = await fetch(`${authServiceBaseUrl(event)}/v1/auth/me`, {
     headers,
     method: "GET"
   });
@@ -179,7 +179,7 @@ export async function proxyMe(event: H3Event): Promise<AuthMeResponse | Record<s
 
     accessToken = refreshed.access_token;
     headers.set("Authorization", `Bearer ${accessToken}`);
-    response = await fetch(`${authServiceBaseUrl()}/v1/auth/me`, {
+    response = await fetch(`${authServiceBaseUrl(event)}/v1/auth/me`, {
       headers,
       method: "GET"
     });
@@ -215,7 +215,7 @@ export async function proxyLogout(event: H3Event) {
   }
 
   if (accessToken && sessionId) {
-    await fetch(`${authServiceBaseUrl()}/v1/auth/logout`, {
+    await fetch(`${authServiceBaseUrl(event)}/v1/auth/logout`, {
       body: JSON.stringify({ session_id: sessionId }),
       headers,
       method: "POST"
@@ -232,7 +232,7 @@ export async function proxyRegister(event: H3Event) {
   const headers = new Headers({ "Content-Type": "application/json" });
   forwardTracingHeaders(event, headers);
 
-  const response = await fetch(`${authServiceBaseUrl()}/v1/auth/register`, {
+  const response = await fetch(`${authServiceBaseUrl(event)}/v1/auth/register`, {
     body: JSON.stringify(body),
     headers,
     method: "POST"

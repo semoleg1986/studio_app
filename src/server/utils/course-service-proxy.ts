@@ -9,8 +9,8 @@ interface CourseServiceProxyOptions {
   query?: Record<string, unknown>;
 }
 
-function courseServiceBaseUrl() {
-  const runtimeConfig = useRuntimeConfig();
+function courseServiceBaseUrl(event: H3Event) {
+  const runtimeConfig = useRuntimeConfig(event);
 
   return String(runtimeConfig.courseServiceBaseUrl || "http://localhost:8001").replace(/\/$/, "");
 }
@@ -137,7 +137,7 @@ export async function proxyCourseServiceJson<TResponse>(
     return unauthorizedProblem();
   }
 
-  const url = buildCourseServiceUrl(courseServiceBaseUrl(), path, options.query);
+  const url = buildCourseServiceUrl(courseServiceBaseUrl(event), path, options.query);
   const method = options.method ?? "GET";
   let response = await fetchCourseService(url, event, accessToken, method);
 
