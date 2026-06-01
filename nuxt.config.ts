@@ -8,6 +8,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     authServiceBaseUrl: "http://localhost:8000",
+    courseServiceBaseUrl: "http://localhost:8001",
     public: {
       apiBaseUrl: "/api",
       appName: "Curs Studio",

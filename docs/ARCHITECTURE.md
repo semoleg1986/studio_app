@@ -3,6 +3,7 @@
 `studio_app` построен по layered/FSD-подходу поверх Nuxt 3.
 
 ## Слои
+
 - `src/app`:
   - глобальные стили,
   - приложение/инициализация,
@@ -22,6 +23,7 @@
   - Nitro API handlers.
 
 ## Правила зависимостей
+
 - `pages` может импортировать из `shared`.
 - `pages` может импортировать из `features`.
 - `features` может импортировать из `shared`.
@@ -31,14 +33,26 @@
 - Общие типы DTO выносятся в `shared/types`.
 
 ## Папки
+
 - `src/features/*/{model,api,ui}`: вертикальные срезы фич.
 - `src/shared/ui/*`: атомарные компоненты.
 - `src/shared/lib/*`: чистые функции (без side effects).
 - `src/shared/lib/preferences/*`: i18n + theme preferences (`light|dark|system`).
 - `src/shared/api/*`: обертки над `useFetch`.
+- `src/shared/types/*`: DTO контракты backend read models.
 - `tests/unit/*`: юнит-тесты по слоям shared/server.
 
+## Backend contracts
+
+- Studio UI ходит только в относительный `/api`.
+- Nitro server routes проксируют backend-сервисы и добавляют auth/tracing headers.
+- Course authoring/read model берется из `course_service` через:
+  - `GET /api/admin/courses` -> `GET /v1/admin/courses`;
+  - `GET /api/admin/courses/:courseId/authoring` -> `GET /v1/admin/courses/:courseId/authoring`.
+- Frontend после create/update/reorder должен делать refetch authoring endpoint, а не собирать состояние из нескольких raw objects.
+
 ## Why this
+
 - предсказуемый рост проекта,
 - легкий onboarding,
 - контроль связности и границ слоя.

@@ -14,6 +14,7 @@ npm run dev
 ```
 
 App URL:
+
 - [http://localhost:3002](http://localhost:3002)
 
 ## Environment
@@ -22,7 +23,9 @@ App URL:
 - [studio_app/.env.local.example](/Users/olegsemenov/Programming/curs/studio_app/.env.local.example)
 
 Key variables:
+
 - `NUXT_AUTH_SERVICE_BASE_URL`
+- `NUXT_COURSE_SERVICE_BASE_URL`
 - `NUXT_PUBLIC_API_BASE_URL`
 - `NUXT_PUBLIC_SITE_URL`
 

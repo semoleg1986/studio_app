@@ -1,11 +1,14 @@
 <template>
   <main class="page">
-    <HeroBanner
-      :title="t('page.hero.title')"
-      :subtitle="t('page.hero.subtitle')"
-    />
+    <HeroBanner :title="t('page.hero.title')" :subtitle="t('page.hero.subtitle')" />
     <p class="status">{{ t("page.status") }}: {{ t(`status.${status}`) }}</p>
-    <CourseCatalogSection :courses="courses" />
+    <CourseCatalogSection
+      :courses="courses"
+      :error-message="coursesErrorMessage"
+      :pending="coursesPending"
+      :total="total"
+      @refresh="refreshCourses"
+    />
   </main>
 </template>
 
@@ -14,7 +17,8 @@ import { CourseCatalogSection } from "~/features/course-catalog";
 import HeroBanner from "~/shared/ui/hero-banner/HeroBanner.vue";
 import { useHomePage } from "~/widgets/home-page/model/use-home-page";
 
-const { courses, status, t } = await useHomePage();
+const { courses, coursesErrorMessage, coursesPending, refreshCourses, status, t, total } =
+  await useHomePage();
 </script>
 
 <style scoped>

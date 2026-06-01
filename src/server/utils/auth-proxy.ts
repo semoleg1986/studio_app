@@ -9,7 +9,7 @@ import {
   setAuthCookies
 } from "~/server/utils/auth-session";
 
-interface AuthTokenPairResponse {
+export interface AuthTokenPairResponse {
   access_token: string;
   expires_in: number;
   refresh_token: string;
@@ -28,9 +28,7 @@ function authServiceBaseUrl() {
   const runtimeConfig = useRuntimeConfig();
 
   return String(
-    runtimeConfig.authServiceBaseUrl ||
-      runtimeConfig.public.apiBaseUrl ||
-      "http://localhost:8000"
+    runtimeConfig.authServiceBaseUrl || runtimeConfig.public.apiBaseUrl || "http://localhost:8000"
   ).replace(/\/$/, "");
 }
 
@@ -64,7 +62,7 @@ async function forwardUpstreamError(event: H3Event, response: Response) {
   return await response.json();
 }
 
-async function exchangeRefreshToken(event: H3Event) {
+export async function exchangeRefreshToken(event: H3Event) {
   const refreshToken = getRefreshToken(event);
 
   if (!refreshToken) {
@@ -109,7 +107,7 @@ export async function proxyLogin(event: H3Event) {
           user_agent_raw:
             typeof (body as Record<string, unknown>).user_agent_raw === "string"
               ? (body as Record<string, string>).user_agent_raw
-              : userAgent ?? undefined
+              : (userAgent ?? undefined)
         }
       : body;
 

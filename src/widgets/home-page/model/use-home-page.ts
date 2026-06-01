@@ -17,11 +17,16 @@ export async function useHomePage() {
 
   const { data: health } = await useHealthQuery();
   const status = computed(() => (health.value?.ok ? "ok" : "degraded"));
-  const { courses } = await useCourseCatalog();
+  const { apiError, courses, pending, refresh, total } = await useCourseCatalog();
+  const coursesErrorMessage = computed(() => apiError.value?.statusMessage ?? "");
 
   return {
     courses,
+    coursesErrorMessage,
+    coursesPending: pending,
+    refreshCourses: refresh,
     status,
-    t
+    t,
+    total
   };
 }

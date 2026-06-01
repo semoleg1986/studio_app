@@ -9,6 +9,6 @@ describe("translate", () => {
 
   it("falls back to russian value for unknown locale key", () => {
     expect(translate("en", "footer.unknown.key")).toBe("footer.unknown.key");
-    expect(translate("en", "catalog.title")).toBe("Courses in production");
+    expect(translate("en", "catalog.title")).toBe("Courses");
   });
 });
