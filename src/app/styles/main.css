@@ -1,22 +1,34 @@
 :root {
-  --c-bg: #fffdf7;
-  --c-fg: #18222c;
-  --c-muted: #445866;
-  --c-surface: #ffffff;
-  --c-border: #d9e5e8;
-  --c-footer-bg: #f7fbfc;
-  --c-accent: #157a8a;
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #d1d5db;
+  --font-size-base: 14px;
+  --font-scale: 1;
+  --c-bg: var(--bg);
+  --c-fg: var(--text);
+  --c-muted: var(--muted);
+  --c-surface: var(--panel);
+  --c-border: var(--border);
+  --c-footer-bg: var(--panel);
+  --c-accent: #0f172a;
+  --c-bg-soft: color-mix(in srgb, var(--bg) 84%, var(--panel) 16%);
+  --c-danger: #b91c1c;
 }
 
 [data-theme="dark"] {
-  --c-bg: #0f1519;
-  --c-fg: #e9f0f2;
-  --c-muted: #a5bbc2;
-  --c-surface: #172126;
-  --c-border: #2c3e46;
-  --c-footer-bg: #121b20;
-  --c-accent: #44b2c1;
+  --bg: #0b1220;
+  --panel: #0f172a;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --border: #334155;
+  --c-accent: #38bdf8;
   color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html,
@@ -28,7 +40,19 @@ body,
 }
 
 body {
-  background: radial-gradient(circle at top right, #daf1ef 0%, var(--c-bg) 45%);
-  color: var(--c-fg);
-  transition: background 180ms ease, color 180ms ease;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    "IBM Plex Sans",
+    "SF Pro Text",
+    "Segoe UI",
+    Roboto,
+    -apple-system,
+    sans-serif;
+  font-size: calc(var(--font-size-base) * var(--font-scale));
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
 }

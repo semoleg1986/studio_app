@@ -6,12 +6,24 @@
         <h2>{{ t("catalog.title") }}</h2>
         <p class="summary">{{ t("catalog.total") }}: {{ total }}</p>
       </div>
-      <button class="refresh" type="button" @click="$emit('refresh')">
+      <button
+        class="refresh"
+        type="button"
+        :disabled="unauthorized || pending"
+        @click="$emit('refresh')"
+      >
         {{ t("catalog.refresh") }}
       </button>
     </header>
 
-    <p v-if="pending" class="empty">{{ t("catalog.loading") }}</p>
+    <UiCard v-if="unauthorized" class="auth-card" max-width="100%">
+      <h3>{{ t("catalog.auth.title") }}</h3>
+      <p>{{ t("catalog.auth.text") }}</p>
+      <UiButton as="NuxtLink" to="/login">
+        {{ t("catalog.auth.action") }}
+      </UiButton>
+    </UiCard>
+    <p v-else-if="pending" class="empty">{{ t("catalog.loading") }}</p>
     <p v-else-if="errorMessage" class="error">{{ errorMessage }}</p>
     <ul v-else-if="courses.length > 0" class="grid">
       <li v-for="course in courses" :key="course.course_id" class="card">
@@ -49,12 +61,15 @@
 <script setup lang="ts">
 import type { StudioCourseListItem } from "~/features/course-catalog/model/types";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
+import UiButton from "~/shared/ui/UiButton.vue";
+import UiCard from "~/shared/ui/UiCard.vue";
 
 const props = defineProps<{
   courses: StudioCourseListItem[];
   errorMessage?: string;
   pending?: boolean;
   total: number;
+  unauthorized?: boolean;
 }>();
 
 defineEmits<{
@@ -89,6 +104,20 @@ const total = computed(() => props.total);
 <style scoped>
 .catalog {
   margin-top: 2rem;
+}
+
+.auth-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.auth-card h3,
+.auth-card p {
+  margin: 0;
+}
+
+.auth-card p {
+  color: var(--muted);
 }
 
 .catalog__header {
@@ -132,6 +161,11 @@ h3 {
   font: inherit;
   font-weight: 700;
   padding: 0.65rem 1rem;
+}
+
+.refresh:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .grid {

@@ -14,19 +14,22 @@ defineProps<{
 
 <style scoped>
 .hero {
-  padding: 2rem 1rem;
+  padding: 1.25rem 1rem;
   border-radius: 16px;
-  background: linear-gradient(135deg, color-mix(in oklab, var(--c-surface), #f9f4e8 35%) 0%, color-mix(in oklab, var(--c-surface), #d6f0f0 50%) 100%);
-  border: 1px solid var(--c-border);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(56, 189, 248, 0.12), transparent 34%), var(--panel);
+  border: 1px solid var(--border);
 }
 
 h1 {
   margin: 0 0 0.5rem;
-  font-size: 2rem;
+  color: var(--text);
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  line-height: 1.05;
 }
 
 p {
   margin: 0;
-  color: var(--c-muted);
+  color: var(--muted);
 }
 </style>

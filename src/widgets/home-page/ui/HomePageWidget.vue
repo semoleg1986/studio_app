@@ -1,12 +1,16 @@
 <template>
   <main class="page">
     <HeroBanner :title="t('page.hero.title')" :subtitle="t('page.hero.subtitle')" />
-    <p class="status">{{ t("page.status") }}: {{ t(`status.${status}`) }}</p>
+    <p class="status">
+      <span>{{ t("page.status") }}</span>
+      <strong>{{ t(`status.${status}`) }}</strong>
+    </p>
     <CourseCatalogSection
       :courses="courses"
       :error-message="coursesErrorMessage"
       :pending="coursesPending"
       :total="total"
+      :unauthorized="coursesUnauthorized"
       @refresh="refreshCourses"
     />
   </main>
@@ -17,20 +21,41 @@ import { CourseCatalogSection } from "~/features/course-catalog";
 import HeroBanner from "~/shared/ui/hero-banner/HeroBanner.vue";
 import { useHomePage } from "~/widgets/home-page/model/use-home-page";
 
-const { courses, coursesErrorMessage, coursesPending, refreshCourses, status, t, total } =
-  useHomePage();
+const {
+  courses,
+  coursesErrorMessage,
+  coursesPending,
+  coursesUnauthorized,
+  refreshCourses,
+  status,
+  t,
+  total
+} = useHomePage();
 </script>
 
 <style scoped>
 .page {
-  max-width: 960px;
+  width: min(1180px, calc(100% - 2rem));
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 2rem 1rem;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  padding: 2rem 0;
 }
 
 .status {
-  margin-top: 1rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.status strong {
+  color: var(--text);
 }
 </style>
