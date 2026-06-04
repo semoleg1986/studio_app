@@ -1,21 +1,27 @@
 <template>
-  <component :is="as" class="ui-button" :class="variantClass">
+  <component :is="component" class="ui-button" :class="variantClass" :to="to">
     <slot />
   </component>
 </template>
 
 <script setup lang="ts">
+import { resolveComponent, type Component } from "vue";
+
 const props = withDefaults(
   defineProps<{
-    as?: string;
+    as?: string | Component;
+    to?: string;
     variant?: "primary" | "ghost" | "danger" | "ghost-danger";
   }>(),
   {
     as: "button",
+    to: undefined,
     variant: "primary"
   }
 );
 
+const nuxtLink = resolveComponent("NuxtLink");
+const component = computed(() => (props.to ? nuxtLink : props.as));
 const variantClass = computed(() =>
   props.variant === "primary" ? null : `ui-button--${props.variant}`
 );
