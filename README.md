@@ -44,6 +44,15 @@ npm run build
 npm run start
 ```
 
+## Auth onboarding
+
+Studio staff users are created by backend invite flow.
+
+- Invite link opens `/invite/accept?token=<token>`.
+- Browser submits `POST /api/auth/invites/accept`.
+- Nitro proxies to `auth_service` `POST /v1/auth/invites/accept`.
+- On success, Studio stores auth cookies and redirects to `/`.
+
 ## Documentation
 
 - [docs/ARCHITECTURE.md](/Users/olegsemenov/Programming/curs/studio_app/docs/ARCHITECTURE.md)

@@ -20,8 +20,12 @@ interface AuthMeResponse {
   account_id: string;
   user_id: string;
   email: string;
-  roles: Array<"admin" | "teacher" | "parent" | "student">;
+  roles: Array<"admin" | "teacher" | "content_manager" | "parent" | "student">;
   status: "active" | "blocked" | "archived";
+}
+
+interface AuthInviteAcceptResponse extends AuthTokenPairResponse {
+  user: AuthMeResponse;
 }
 
 function authServiceBaseUrl(event: H3Event) {
@@ -139,6 +143,48 @@ export async function proxyLogin(event: H3Event) {
   }
 
   return meResponse;
+}
+
+export async function proxyAcceptInvite(event: H3Event) {
+  const body = await readBody(event);
+  const headers = new Headers({ "Content-Type": "application/json" });
+  const userAgent = getHeader(event, "user-agent");
+
+  forwardTracingHeaders(event, headers);
+
+  const payload =
+    typeof body === "object" && body !== null
+      ? {
+          ...body,
+          user_agent_raw:
+            typeof (body as Record<string, unknown>).user_agent_raw === "string"
+              ? (body as Record<string, string>).user_agent_raw
+              : (userAgent ?? undefined)
+        }
+      : body;
+
+  const response = await fetch(`${authServiceBaseUrl(event)}/v1/auth/invites/accept`, {
+    body: JSON.stringify(payload),
+    headers,
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    return await forwardUpstreamError(event, response);
+  }
+
+  const session = (await response.json()) as AuthInviteAcceptResponse;
+  setAuthCookies(event, {
+    accessToken: session.access_token,
+    expiresIn: session.expires_in,
+    refreshToken: session.refresh_token
+  });
+
+  return {
+    expires_in: session.expires_in,
+    token_type: session.token_type,
+    user: session.user
+  };
 }
 
 export async function proxyMe(event: H3Event): Promise<AuthMeResponse | Record<string, unknown>> {

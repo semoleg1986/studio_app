@@ -1,4 +1,8 @@
-import type { AuthMe, AuthLoginPayload } from "~/features/auth/model/types";
+import type {
+  AuthInviteAcceptPayload,
+  AuthLoginPayload,
+  AuthMe
+} from "~/features/auth/model/types";
 import { useAuthClient } from "~/features/auth/api/auth-client";
 import { ApiRequestError } from "~/shared/api/types";
 
@@ -64,6 +68,23 @@ export function useAuthSession() {
     }
   }
 
+  async function acceptInvite(payload: AuthInviteAcceptPayload) {
+    state.value.pending = true;
+    state.value.error = null;
+
+    try {
+      const session = await authClient.acceptInvite(payload);
+      state.value.user = session.user;
+      state.value.initialized = true;
+      return session;
+    } catch (error) {
+      state.value.error = error as ApiRequestError;
+      throw error;
+    } finally {
+      state.value.pending = false;
+    }
+  }
+
   async function logout() {
     state.value.pending = true;
     state.value.error = null;
@@ -81,6 +102,7 @@ export function useAuthSession() {
   }
 
   return {
+    acceptInvite,
     bootstrap,
     error: computed(() => state.value.error),
     initialized: computed(() => state.value.initialized),

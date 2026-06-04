@@ -49,6 +49,10 @@
 - Course authoring/read model берется из `course_service` через:
   - `GET /api/admin/courses` -> `GET /v1/admin/courses`;
   - `GET /api/admin/courses/:courseId/authoring` -> `GET /v1/admin/courses/:courseId/authoring`.
+- Studio invite onboarding:
+  - `/invite/accept?token=<token>` is a public auth page;
+  - `POST /api/auth/invites/accept` -> `POST /v1/auth/invites/accept`;
+  - server proxy stores auth cookies after successful invite acceptance.
 - Frontend после create/update/reorder должен делать refetch authoring endpoint, а не собирать состояние из нескольких raw objects.
 
 ## Why this

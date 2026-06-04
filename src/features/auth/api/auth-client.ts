@@ -1,4 +1,5 @@
 import type {
+  AuthInviteAcceptPayload,
   AuthLoginPayload,
   AuthMe,
   AuthRegisterPayload,
@@ -10,6 +11,12 @@ export function useAuthClient() {
   const api = useApiClient();
 
   return {
+    acceptInvite(payload: AuthInviteAcceptPayload) {
+      return api.post<AuthSessionSnapshot, AuthInviteAcceptPayload>(
+        "/auth/invites/accept",
+        payload
+      );
+    },
     getCurrentUser() {
       return api.get<AuthMe>("/auth/me");
     },

@@ -65,7 +65,9 @@ const routePath = computed(() =>
 );
 const canonicalUrl = computed(() => `${siteUrl.value}${routePath.value}`);
 const ogImageUrl = computed(() => `${siteUrl.value}/og-image.svg`);
-const isAuthPage = computed(() => route.path.startsWith("/login"));
+const isAuthPage = computed(
+  () => route.path.startsWith("/login") || route.path.startsWith("/invite/accept")
+);
 
 const localeFromQuery = computed(() => {
   const lang = route.query.lang;

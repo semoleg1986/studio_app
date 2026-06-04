@@ -2,7 +2,7 @@ import { defineNuxtRouteMiddleware, navigateTo } from "#app";
 import { useAuthSession } from "~/features/auth";
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (to.path.startsWith("/login")) {
+  if (to.path.startsWith("/login") || to.path.startsWith("/invite/accept")) {
     return;
   }
 

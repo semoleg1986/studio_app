@@ -1,5 +1,11 @@
-export type AuthRole = "admin" | "teacher" | "parent" | "student";
+export type AuthRole = "admin" | "teacher" | "content_manager" | "parent" | "student";
 export type AuthStatus = "active" | "blocked" | "archived";
+
+export interface AuthInviteAcceptPayload {
+  token: string;
+  password: string;
+  session_fingerprint?: string;
+}
 
 export interface AuthLoginPayload {
   email: string;
