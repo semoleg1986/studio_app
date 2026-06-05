@@ -51,282 +51,33 @@
               @update:course-form="Object.assign(courseForm, $event)"
             />
 
-            <section class="structure-card surface-card">
-              <header class="tabs-row">
-                <div class="tabs">
-                  <button class="tab tab--active" type="button">Модули</button>
-                  <button class="tab" type="button">
-                    Уроки <span>{{ lessonCount }}</span>
-                  </button>
-                </div>
-                <button
-                  class="ghost-action ghost-action--small"
-                  type="button"
-                  @click="refreshAuthoring"
-                >
-                  Обновить
-                </button>
-              </header>
-
-              <div :class="['authoring-lane', { 'authoring-lane--with-lesson': selectedLesson }]">
-                <div class="modules-column">
-                  <form class="inline-create" @submit.prevent="addModule">
-                    <input v-model="moduleForm.title" placeholder="Название нового модуля" />
-                    <button type="submit" :disabled="mutating">+ Модуль</button>
-                  </form>
-
-                  <div v-if="modules.length === 0" class="empty-editor">
-                    <strong>Добавьте первый модуль</strong>
-                    <span>После этого можно будет создавать уроки внутри модуля.</span>
-                  </div>
-
-                  <article v-for="module in modules" :key="module.module_id" class="module-card">
-                    <header class="module-head">
-                      <button
-                        type="button"
-                        class="node-button"
-                        @click="selectedNode = { type: 'module', moduleId: module.module_id }"
-                      >
-                        <span class="drag-handle">⠿</span>
-                        <strong>{{ module.position }}. {{ module.title }}</strong>
-                        <small>{{ module.lessons.length }} урока</small>
-                        <span class="collapse-mark">⌃</span>
-                      </button>
-                      <div class="node-actions">
-                        <span class="state-chip node-state" :data-state="module.status">
-                          {{ stateLabel(module.status) }}
-                        </span>
-                        <button
-                          v-if="module.status !== 'published' && module.status !== 'archived'"
-                          class="action-pill"
-                          type="button"
-                          :disabled="mutating"
-                          @click.stop="publishModule(module)"
-                        >
-                          Опубликовать
-                        </button>
-                        <button
-                          v-if="module.status === 'archived'"
-                          class="action-pill action-pill--restore"
-                          type="button"
-                          :disabled="mutating"
-                          @click.stop="restoreModule(module)"
-                        >
-                          Вернуть
-                        </button>
-                        <button
-                          type="button"
-                          :disabled="mutating"
-                          @click.stop="moveModule(module.module_id, -1)"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          :disabled="mutating"
-                          @click.stop="moveModule(module.module_id, 1)"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          type="button"
-                          :disabled="mutating"
-                          @click.stop="duplicateModule(module.module_id)"
-                        >
-                          ⧉
-                        </button>
-                        <button
-                          class="danger-link action-pill"
-                          type="button"
-                          :disabled="mutating || module.status === 'archived'"
-                          @click.stop="archiveModule(module.module_id)"
-                        >
-                          В архив
-                        </button>
-                      </div>
-                    </header>
-
-                    <div class="module-edit">
-                      <input v-model="module.title" />
-                      <input v-model="module.description" placeholder="Описание модуля" />
-                      <button type="button" :disabled="mutating" @click="saveModule(module)">
-                        Сохранить
-                      </button>
-                    </div>
-
-                    <ul class="lesson-list">
-                      <li v-for="lesson in module.lessons" :key="lesson.lesson_id">
-                        <div
-                          :class="[
-                            'lesson-row',
-                            {
-                              active:
-                                selectedNode.type === 'lesson' &&
-                                selectedNode.lessonId === lesson.lesson_id
-                            }
-                          ]"
-                        >
-                          <button
-                            type="button"
-                            class="lesson-item"
-                            @click="
-                              selectedNode = {
-                                type: 'lesson',
-                                moduleId: module.module_id,
-                                lessonId: lesson.lesson_id
-                              }
-                            "
-                          >
-                            <span class="lesson-position"
-                              >{{ module.position }}.{{ lesson.position }}</span
-                            >
-                            <strong>{{ lesson.title }}</strong>
-                            <small class="lesson-type">{{
-                              contentTypeLabel(lesson.content_type)
-                            }}</small>
-                            <small class="state-chip lesson-state" :data-state="lesson.status">
-                              {{ stateLabel(lesson.status) }}
-                            </small>
-                            <small>{{ lesson.duration_minutes ?? "—" }} мин</small>
-                            <span class="lesson-status">✓</span>
-                          </button>
-                          <div class="lesson-actions">
-                            <button
-                              type="button"
-                              :disabled="mutating"
-                              @click.stop="moveLesson(module.module_id, lesson.lesson_id, -1)"
-                            >
-                              ↑
-                            </button>
-                            <button
-                              type="button"
-                              :disabled="mutating"
-                              @click.stop="moveLesson(module.module_id, lesson.lesson_id, 1)"
-                            >
-                              ↓
-                            </button>
-                            <button
-                              type="button"
-                              :disabled="mutating"
-                              @click.stop="duplicateLesson(module.module_id, lesson.lesson_id)"
-                            >
-                              ⧉
-                            </button>
-                            <button
-                              class="danger-link action-pill"
-                              type="button"
-                              :disabled="mutating || lesson.status === 'archived'"
-                              @click.stop="archiveLesson(module.module_id, lesson.lesson_id)"
-                            >
-                              В архив
-                            </button>
-                            <button
-                              v-if="lesson.status === 'archived'"
-                              class="action-pill action-pill--restore"
-                              type="button"
-                              :disabled="mutating"
-                              @click.stop="restoreLesson(module.module_id, lesson)"
-                            >
-                              Вернуть
-                            </button>
-                          </div>
-                        </div>
-                        <aside
-                          v-if="
-                            selectedNode.type === 'lesson' &&
-                            selectedNode.lessonId === lesson.lesson_id &&
-                            selectedLesson
-                          "
-                          class="lesson-drawer lesson-drawer--inline"
-                        >
-                          <h2>Урок {{ module.position }}.{{ lesson.position }}</h2>
-                          <label class="field">
-                            <span>Название урока</span>
-                            <input v-model="selectedLesson.title" />
-                          </label>
-                          <label class="field">
-                            <span>Тип урока</span>
-                            <div class="input-shell input-shell--select">
-                              <b>▧</b>
-                              <select v-model="selectedLesson.content_type">
-                                <option value="video">Видео</option>
-                                <option value="text">Текст</option>
-                                <option value="quiz">Quiz</option>
-                                <option value="live">Live</option>
-                              </select>
-                            </div>
-                          </label>
-                          <label class="field">
-                            <span>Длительность</span>
-                            <div class="duration-field">
-                              <input
-                                v-model.number="selectedLesson.duration_minutes"
-                                min="1"
-                                type="number"
-                              />
-                              <span>мин</span>
-                            </div>
-                          </label>
-                          <label class="field">
-                            <span>Описание</span>
-                            <textarea v-model="selectedLesson.description" />
-                          </label>
-                          <label class="check-row">
-                            <input v-model="selectedLesson.is_preview" type="checkbox" />
-                            Preview урок
-                          </label>
-                          <div class="lesson-editor-actions">
-                            <button
-                              v-if="selectedLesson.status !== 'published'"
-                              class="ghost-action"
-                              type="button"
-                              :disabled="mutating || selectedLesson.status === 'archived'"
-                              @click="publishLesson(module.module_id, selectedLesson)"
-                            >
-                              Опубликовать урок
-                            </button>
-                            <button
-                              v-if="selectedLesson.status === 'archived'"
-                              class="ghost-action"
-                              type="button"
-                              :disabled="mutating"
-                              @click="restoreLesson(module.module_id, selectedLesson)"
-                            >
-                              Вернуть урок
-                            </button>
-                            <button
-                              class="danger-action"
-                              type="button"
-                              :disabled="mutating || selectedLesson.status === 'archived'"
-                              @click="archiveLesson(module.module_id, selectedLesson.lesson_id)"
-                            >
-                              В архив
-                            </button>
-                            <button
-                              class="primary-action"
-                              type="button"
-                              :disabled="mutating || !selectedNodeIsLesson"
-                              @click="saveSelectedLesson"
-                            >
-                              Сохранить урок
-                            </button>
-                          </div>
-                        </aside>
-                      </li>
-                    </ul>
-
-                    <form
-                      class="inline-create lesson-create"
-                      @submit.prevent="addLesson(module.module_id)"
-                    >
-                      <input v-model="lessonForm.title" placeholder="Новый урок" />
-                      <input v-model.number="lessonForm.duration_minutes" min="1" type="number" />
-                      <button type="submit" :disabled="mutating">+ Урок</button>
-                    </form>
-                  </article>
-                </div>
-              </div>
-            </section>
+            <CourseStructureEditor
+              v-model:selected-node="selectedNode"
+              :lesson-form="lessonForm"
+              :module-form="moduleForm"
+              :modules="modules"
+              :mutating="mutating"
+              :selected-lesson="selectedLesson"
+              @add-lesson="addLesson"
+              @add-module="addModule"
+              @archive-lesson="archiveLesson"
+              @archive-module="archiveModule"
+              @duplicate-lesson="duplicateLesson"
+              @duplicate-module="duplicateModule"
+              @move-lesson="moveLesson"
+              @move-module="moveModule"
+              @publish-lesson="publishLesson"
+              @publish-module="publishModule"
+              @refresh="refreshAuthoring"
+              @restore-lesson="restoreLesson"
+              @restore-module="restoreModule"
+              @save-module="saveModule"
+              @save-selected-lesson="saveSelectedLesson"
+              @update:lesson-form="Object.assign(lessonForm, $event)"
+              @update:module="patchModule"
+              @update:module-form="Object.assign(moduleForm, $event)"
+              @update:selected-lesson="patchSelectedLesson"
+            />
           </template>
 
           <div v-else class="empty-editor empty-editor--large">
@@ -354,14 +105,14 @@
 </template>
 
 <script setup lang="ts">
-import type { CoursePublishState } from "~/shared/types/course-authoring";
 import { useAuthSession } from "~/features/auth";
 import { useCourseBuilder } from "~/features/course-builder/model/use-course-builder";
-import type { StudioCourseLesson } from "~/features/course-builder/model/types";
+import type { StudioCourseLesson, StudioCourseModule } from "~/features/course-builder/model/types";
 import CourseBuilderToolbar from "~/features/course-builder/ui/CourseBuilderToolbar.vue";
 import CourseDetailsCard from "~/features/course-builder/ui/CourseDetailsCard.vue";
 import CourseInspector from "~/features/course-builder/ui/CourseInspector.vue";
 import CourseListPanel from "~/features/course-builder/ui/CourseListPanel.vue";
+import CourseStructureEditor from "~/features/course-builder/ui/CourseStructureEditor.vue";
 import StudioNavigationRail from "~/features/course-builder/ui/StudioNavigationRail.vue";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
 
@@ -413,10 +164,6 @@ const {
   total
 } = useCourseBuilder();
 
-const selectedNodeIsLesson = computed(() => selectedNode.value.type === "lesson");
-const lessonCount = computed(() =>
-  modules.value.reduce((count, module) => count + module.lessons.length, 0)
-);
 const readinessPercent = computed(() => {
   if (readiness.value.length === 0) {
     return 0;
@@ -428,30 +175,31 @@ const draftVersion = computed(() => authoring.value?.draft_version ?? "—");
 const publishedVersion = computed(() => authoring.value?.published_version ?? "—");
 const userInitial = computed(() => user.value?.email?.slice(0, 1).toUpperCase() ?? "C");
 
-function stateLabel(state: CoursePublishState) {
-  const labels: Record<string, string> = {
-    archived: "Архив",
-    draft: "Черновик",
-    published: "Опубликовано"
-  };
-  return labels[state] ?? state;
-}
-
-function contentTypeLabel(value: string) {
-  const labels: Record<string, string> = {
-    live: "Live",
-    quiz: "Quiz",
-    text: "Текст",
-    video: "Видео"
-  };
-  return labels[value] ?? value;
-}
-
 function saveSelectedLesson() {
   if (selectedNode.value.type !== "lesson" || !selectedLesson.value) {
     return;
   }
   void saveLesson(selectedNode.value.moduleId, selectedLesson.value as StudioCourseLesson);
+}
+
+function patchModule(
+  module: StudioCourseModule,
+  patch: Partial<Pick<StudioCourseModule, "description" | "title">>
+) {
+  Object.assign(module, patch);
+}
+
+function patchSelectedLesson(
+  patch: Partial<
+    Pick<
+      StudioCourseLesson,
+      "content_type" | "description" | "duration_minutes" | "is_preview" | "title"
+    >
+  >
+) {
+  if (selectedLesson.value) {
+    Object.assign(selectedLesson.value, patch);
+  }
 }
 </script>
 

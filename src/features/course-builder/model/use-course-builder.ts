@@ -2,6 +2,7 @@ import { useCourseBuilderClient } from "~/features/course-builder/api/course-bui
 import type {
   AddLessonPayload,
   AddModulePayload,
+  CourseBuilderSelectedNode,
   StudioCourse,
   StudioCourseAuthoring,
   StudioCourseLesson,
@@ -14,10 +15,6 @@ import { useAuthSession } from "~/features/auth";
 import { ApiRequestError } from "~/shared/api/types";
 
 type CourseFilter = "all" | "draft" | "published" | "archived";
-type SelectedNode =
-  | { type: "course" }
-  | { type: "module"; moduleId: string }
-  | { type: "lesson"; moduleId: string; lessonId: string };
 
 function tomorrowIso() {
   const date = new Date();
@@ -43,7 +40,7 @@ export function useCourseBuilder() {
   const courses = ref<StudioCourse[]>([]);
   const authoring = ref<StudioCourseAuthoring | null>(null);
   const selectedCourseId = ref<string | null>(null);
-  const selectedNode = ref<SelectedNode>({ type: "course" });
+  const selectedNode = ref<CourseBuilderSelectedNode>({ type: "course" });
   const filter = ref<CourseFilter>("all");
   const search = ref("");
   const loadingCourses = ref(false);

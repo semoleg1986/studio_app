@@ -13,6 +13,11 @@ export type StudioCourseAuthoring = AdminCourseAuthoringResponse;
 export type StudioCourseModule = AdminCourseAuthoringModule;
 export type StudioCourseLesson = AdminCourseAuthoringLesson;
 
+export type CourseBuilderSelectedNode =
+  | { type: "course" }
+  | { type: "module"; moduleId: string }
+  | { type: "lesson"; moduleId: string; lessonId: string };
+
 export interface CreateCoursePayload {
   title: string;
   description?: string | null;
