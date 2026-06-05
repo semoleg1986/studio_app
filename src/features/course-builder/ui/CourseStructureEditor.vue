@@ -115,76 +115,25 @@
 
           <ul class="lesson-list">
             <li v-for="lesson in module.lessons" :key="lesson.lesson_id">
-              <div
-                :class="[
-                  'lesson-row',
-                  {
-                    active:
-                      selectedNode.type === 'lesson' && selectedNode.lessonId === lesson.lesson_id
-                  }
-                ]"
-              >
-                <button
-                  type="button"
-                  class="lesson-item"
-                  @click="
-                    $emit('update:selectedNode', {
-                      type: 'lesson',
-                      moduleId: module.module_id,
-                      lessonId: lesson.lesson_id
-                    })
-                  "
-                >
-                  <span class="lesson-position">{{ module.position }}.{{ lesson.position }}</span>
-                  <strong>{{ lesson.title }}</strong>
-                  <small class="lesson-type">{{ contentTypeLabel(lesson.content_type) }}</small>
-                  <small class="state-chip lesson-state" :data-state="lesson.status">
-                    {{ stateLabel(lesson.status) }}
-                  </small>
-                  <small>{{ lesson.duration_minutes ?? "—" }} мин</small>
-                  <span class="lesson-status">✓</span>
-                </button>
-                <div class="lesson-actions">
-                  <button
-                    type="button"
-                    :disabled="mutating"
-                    @click.stop="$emit('move-lesson', module.module_id, lesson.lesson_id, -1)"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    :disabled="mutating"
-                    @click.stop="$emit('move-lesson', module.module_id, lesson.lesson_id, 1)"
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    :disabled="mutating"
-                    @click.stop="$emit('duplicate-lesson', module.module_id, lesson.lesson_id)"
-                  >
-                    ⧉
-                  </button>
-                  <button
-                    class="danger-link action-pill"
-                    type="button"
-                    :disabled="mutating || lesson.status === 'archived'"
-                    @click.stop="$emit('archive-lesson', module.module_id, lesson.lesson_id)"
-                  >
-                    В архив
-                  </button>
-                  <button
-                    v-if="lesson.status === 'archived'"
-                    class="action-pill action-pill--restore"
-                    type="button"
-                    :disabled="mutating"
-                    @click.stop="$emit('restore-lesson', module.module_id, lesson)"
-                  >
-                    Вернуть
-                  </button>
-                </div>
-              </div>
+              <LessonRow
+                :lesson="lesson"
+                :module-position="module.position"
+                :mutating="mutating"
+                :selected="
+                  selectedNode.type === 'lesson' && selectedNode.lessonId === lesson.lesson_id
+                "
+                @archive="$emit('archive-lesson', module.module_id, lesson.lesson_id)"
+                @duplicate="$emit('duplicate-lesson', module.module_id, lesson.lesson_id)"
+                @move="$emit('move-lesson', module.module_id, lesson.lesson_id, $event)"
+                @restore="$emit('restore-lesson', module.module_id, lesson)"
+                @select="
+                  $emit('update:selectedNode', {
+                    type: 'lesson',
+                    moduleId: module.module_id,
+                    lessonId: lesson.lesson_id
+                  })
+                "
+              />
               <LessonInlineEditor
                 v-if="
                   selectedNode.type === 'lesson' &&
@@ -239,6 +188,7 @@ import type {
   StudioCourseModule
 } from "~/features/course-builder/model/types";
 import LessonInlineEditor from "~/features/course-builder/ui/LessonInlineEditor.vue";
+import LessonRow from "~/features/course-builder/ui/LessonRow.vue";
 import type { CoursePublishState } from "~/shared/types/course-authoring";
 
 type ModuleForm = {
@@ -307,16 +257,6 @@ function stateLabel(state: CoursePublishState) {
   return labels[state] ?? state;
 }
 
-function contentTypeLabel(value: string) {
-  const labels: Record<string, string> = {
-    live: "Live",
-    quiz: "Quiz",
-    text: "Текст",
-    video: "Видео"
-  };
-  return labels[value] ?? value;
-}
-
 function updateModule(module: StudioCourseModule, patch: ModulePatch) {
   emit("update:module", module, patch);
 }
@@ -350,9 +290,7 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
 
 .tabs-row,
 .module-head,
-.lesson-row,
-.node-actions,
-.lesson-actions {
+.node-actions {
   display: flex;
   align-items: center;
 }
@@ -483,8 +421,7 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   text-align: left;
 }
 
-.node-button strong,
-.lesson-item strong {
+.node-button strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -499,16 +436,14 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   color: var(--studio-dim);
 }
 
-.node-actions,
-.lesson-actions {
+.node-actions {
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.32rem;
 }
 
-.node-actions button,
-.lesson-actions button {
+.node-actions button {
   display: grid;
   min-width: 28px;
   height: 28px;
@@ -517,27 +452,23 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   padding: 0 0.42rem;
 }
 
-.node-actions .action-pill,
-.lesson-actions .action-pill {
+.node-actions .action-pill {
   min-width: auto;
   padding-inline: 0.62rem;
   white-space: nowrap;
 }
 
-.node-actions .danger-link,
-.lesson-actions .danger-link {
+.node-actions .danger-link {
   border-color: rgb(237 138 125 / 0.24);
   color: var(--studio-danger);
 }
 
-.node-actions .action-pill--restore,
-.lesson-actions .action-pill--restore {
+.node-actions .action-pill--restore {
   border-color: rgb(137 220 230 / 0.36);
   color: var(--studio-accent);
 }
 
-.node-state,
-.lesson-state {
+.node-state {
   white-space: nowrap;
 }
 
@@ -555,47 +486,6 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   margin: 0;
   padding: 0 0.65rem 0.65rem;
   list-style: none;
-}
-
-.lesson-row {
-  gap: 0.5rem;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  transition: all 160ms ease;
-}
-
-.lesson-row.active {
-  border-color: rgb(137 220 230 / 0.35);
-  background: rgb(137 220 230 / 0.08);
-}
-
-.lesson-item {
-  display: grid;
-  min-width: 0;
-  flex: 1;
-  grid-template-columns: 48px minmax(0, 1fr) auto auto 58px 22px;
-  align-items: center;
-  gap: 0.55rem;
-  border: 0;
-  background: transparent;
-  color: var(--studio-text);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.58rem 0.65rem;
-  text-align: left;
-}
-
-.lesson-position,
-.lesson-status {
-  color: var(--studio-muted);
-  font-weight: 950;
-}
-
-.lesson-type {
-  border-radius: 999px;
-  background: rgb(137 220 230 / 0.12);
-  color: var(--studio-accent);
-  padding: 0.22rem 0.48rem;
 }
 
 .state-chip[data-state="published"] {
