@@ -272,6 +272,21 @@ export function useCourseBuilder() {
     await runMutation(() => api.archiveModule(selectedCourseId.value as string, moduleId));
   }
 
+  async function publishModule(module: StudioCourseModule) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const payload: UpdateModulePayload = {
+      title: module.title,
+      description: module.description,
+      is_required: module.is_required,
+      status: "published"
+    };
+    await runMutation(() =>
+      api.updateModule(selectedCourseId.value as string, module.module_id, payload)
+    );
+  }
+
   async function duplicateModule(moduleId: string) {
     if (!selectedCourseId.value) {
       return;
@@ -348,6 +363,24 @@ export function useCourseBuilder() {
     }
     await runMutation(() =>
       api.archiveLesson(selectedCourseId.value as string, moduleId, lessonId)
+    );
+  }
+
+  async function publishLesson(moduleId: string, lesson: StudioCourseLesson) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const payload: UpdateLessonPayload = {
+      title: lesson.title,
+      description: lesson.description,
+      content_type: lesson.content_type,
+      content_ref: lesson.content_ref,
+      duration_minutes: lesson.duration_minutes,
+      is_preview: lesson.is_preview,
+      status: "published"
+    };
+    await runMutation(() =>
+      api.updateLesson(selectedCourseId.value as string, moduleId, lesson.lesson_id, payload)
     );
   }
 
@@ -435,6 +468,8 @@ export function useCourseBuilder() {
     moveModule,
     mutating,
     publishCourse,
+    publishLesson,
+    publishModule,
     readiness,
     readyToPublish,
     refreshAuthoring,

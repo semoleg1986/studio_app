@@ -255,34 +255,46 @@
                         <span class="collapse-mark">⌃</span>
                       </button>
                       <div class="node-actions">
+                        <span class="state-chip node-state" :data-state="module.status">
+                          {{ stateLabel(module.status) }}
+                        </span>
+                        <button
+                          v-if="module.status !== 'published' && module.status !== 'archived'"
+                          class="action-pill"
+                          type="button"
+                          :disabled="mutating"
+                          @click.stop="publishModule(module)"
+                        >
+                          Опубликовать
+                        </button>
                         <button
                           type="button"
                           :disabled="mutating"
-                          @click="moveModule(module.module_id, -1)"
+                          @click.stop="moveModule(module.module_id, -1)"
                         >
                           ↑
                         </button>
                         <button
                           type="button"
                           :disabled="mutating"
-                          @click="moveModule(module.module_id, 1)"
+                          @click.stop="moveModule(module.module_id, 1)"
                         >
                           ↓
                         </button>
                         <button
                           type="button"
                           :disabled="mutating"
-                          @click="duplicateModule(module.module_id)"
+                          @click.stop="duplicateModule(module.module_id)"
                         >
                           ⧉
                         </button>
                         <button
-                          class="danger-link"
+                          class="danger-link action-pill"
                           type="button"
                           :disabled="mutating || module.status === 'archived'"
-                          @click="archiveModule(module.module_id)"
+                          @click.stop="archiveModule(module.module_id)"
                         >
-                          ×
+                          В архив
                         </button>
                       </div>
                     </header>
@@ -325,6 +337,9 @@
                             <small class="lesson-type">{{
                               contentTypeLabel(lesson.content_type)
                             }}</small>
+                            <small class="state-chip lesson-state" :data-state="lesson.status">
+                              {{ stateLabel(lesson.status) }}
+                            </small>
                             <small>{{ lesson.duration_minutes ?? "—" }} мин</small>
                             <span class="lesson-status">✓</span>
                           </button>
@@ -332,34 +347,106 @@
                             <button
                               type="button"
                               :disabled="mutating"
-                              @click="moveLesson(module.module_id, lesson.lesson_id, -1)"
+                              @click.stop="moveLesson(module.module_id, lesson.lesson_id, -1)"
                             >
                               ↑
                             </button>
                             <button
                               type="button"
                               :disabled="mutating"
-                              @click="moveLesson(module.module_id, lesson.lesson_id, 1)"
+                              @click.stop="moveLesson(module.module_id, lesson.lesson_id, 1)"
                             >
                               ↓
                             </button>
                             <button
                               type="button"
                               :disabled="mutating"
-                              @click="duplicateLesson(module.module_id, lesson.lesson_id)"
+                              @click.stop="duplicateLesson(module.module_id, lesson.lesson_id)"
                             >
                               ⧉
                             </button>
                             <button
-                              class="danger-link"
+                              class="danger-link action-pill"
                               type="button"
                               :disabled="mutating || lesson.status === 'archived'"
-                              @click="archiveLesson(module.module_id, lesson.lesson_id)"
+                              @click.stop="archiveLesson(module.module_id, lesson.lesson_id)"
                             >
-                              ×
+                              В архив
                             </button>
                           </div>
                         </div>
+                        <aside
+                          v-if="
+                            selectedNode.type === 'lesson' &&
+                            selectedNode.lessonId === lesson.lesson_id &&
+                            selectedLesson
+                          "
+                          class="lesson-drawer lesson-drawer--inline"
+                        >
+                          <h2>Урок {{ module.position }}.{{ lesson.position }}</h2>
+                          <label class="field">
+                            <span>Название урока</span>
+                            <input v-model="selectedLesson.title" />
+                          </label>
+                          <label class="field">
+                            <span>Тип урока</span>
+                            <div class="input-shell input-shell--select">
+                              <b>▧</b>
+                              <select v-model="selectedLesson.content_type">
+                                <option value="video">Видео</option>
+                                <option value="text">Текст</option>
+                                <option value="quiz">Quiz</option>
+                                <option value="live">Live</option>
+                              </select>
+                            </div>
+                          </label>
+                          <label class="field">
+                            <span>Длительность</span>
+                            <div class="duration-field">
+                              <input
+                                v-model.number="selectedLesson.duration_minutes"
+                                min="1"
+                                type="number"
+                              />
+                              <span>мин</span>
+                            </div>
+                          </label>
+                          <label class="field">
+                            <span>Описание</span>
+                            <textarea v-model="selectedLesson.description" />
+                          </label>
+                          <label class="check-row">
+                            <input v-model="selectedLesson.is_preview" type="checkbox" />
+                            Preview урок
+                          </label>
+                          <div class="lesson-editor-actions">
+                            <button
+                              v-if="selectedLesson.status !== 'published'"
+                              class="ghost-action"
+                              type="button"
+                              :disabled="mutating || selectedLesson.status === 'archived'"
+                              @click="publishLesson(module.module_id, selectedLesson)"
+                            >
+                              Опубликовать урок
+                            </button>
+                            <button
+                              class="danger-action"
+                              type="button"
+                              :disabled="mutating || selectedLesson.status === 'archived'"
+                              @click="archiveLesson(module.module_id, selectedLesson.lesson_id)"
+                            >
+                              В архив
+                            </button>
+                            <button
+                              class="primary-action"
+                              type="button"
+                              :disabled="mutating || !selectedNodeIsLesson"
+                              @click="saveSelectedLesson"
+                            >
+                              Сохранить урок
+                            </button>
+                          </div>
+                        </aside>
                       </li>
                     </ul>
 
@@ -373,53 +460,6 @@
                     </form>
                   </article>
                 </div>
-
-                <aside v-if="selectedLesson" class="lesson-drawer">
-                  <h2>Урок</h2>
-                  <label class="field">
-                    <span>Название урока</span>
-                    <input v-model="selectedLesson.title" />
-                  </label>
-                  <label class="field">
-                    <span>Тип урока</span>
-                    <div class="input-shell input-shell--select">
-                      <b>▧</b>
-                      <select v-model="selectedLesson.content_type">
-                        <option value="video">Видео</option>
-                        <option value="text">Текст</option>
-                        <option value="quiz">Quiz</option>
-                        <option value="live">Live</option>
-                      </select>
-                    </div>
-                  </label>
-                  <label class="field">
-                    <span>Длительность</span>
-                    <div class="duration-field">
-                      <input
-                        v-model.number="selectedLesson.duration_minutes"
-                        min="1"
-                        type="number"
-                      />
-                      <span>мин</span>
-                    </div>
-                  </label>
-                  <label class="field">
-                    <span>Описание</span>
-                    <textarea v-model="selectedLesson.description" />
-                  </label>
-                  <label class="check-row">
-                    <input v-model="selectedLesson.is_preview" type="checkbox" />
-                    Preview урок
-                  </label>
-                  <button
-                    class="primary-action"
-                    type="button"
-                    :disabled="mutating || !selectedNodeIsLesson"
-                    @click="saveSelectedLesson"
-                  >
-                    Сохранить урок
-                  </button>
-                </aside>
               </div>
             </section>
           </template>
@@ -535,6 +575,8 @@ const {
   moveModule,
   mutating,
   publishCourse,
+  publishLesson,
+  publishModule,
   readiness,
   readyToPublish,
   refreshAuthoring,
@@ -1513,6 +1555,11 @@ select:focus,
   gap: 0.32rem;
 }
 
+.node-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .node-actions button,
 .lesson-actions button {
   display: grid;
@@ -1521,6 +1568,18 @@ select:focus,
   place-items: center;
   border-radius: 8px;
   padding: 0 0.42rem;
+}
+
+.node-actions .action-pill,
+.lesson-actions .action-pill {
+  min-width: auto;
+  padding-inline: 0.62rem;
+  white-space: nowrap;
+}
+
+.node-state,
+.lesson-state {
+  white-space: nowrap;
 }
 
 .node-actions .danger-link,
@@ -1552,7 +1611,7 @@ select:focus,
   display: grid;
   min-width: 0;
   flex: 1;
-  grid-template-columns: 48px minmax(0, 1fr) 74px 58px 22px;
+  grid-template-columns: 48px minmax(0, 1fr) auto auto 58px 22px;
   align-items: center;
   gap: 0.58rem;
   border: 0;
@@ -1599,7 +1658,6 @@ select:focus,
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.82rem;
   margin-top: 1rem;
-  order: -1;
   padding: 1rem;
 }
 
@@ -1607,8 +1665,27 @@ select:focus,
 .lesson-drawer .field:first-of-type,
 .lesson-drawer .field:nth-of-type(4),
 .lesson-drawer .check-row,
-.lesson-drawer .primary-action {
+.lesson-drawer .primary-action,
+.lesson-editor-actions {
   grid-column: 1 / -1;
+}
+
+.lesson-drawer--inline {
+  margin: 0.48rem 0.65rem 0.9rem 3.2rem;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.18);
+}
+
+.lesson-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.58rem;
+  justify-content: flex-end;
+}
+
+.lesson-editor-actions .primary-action,
+.lesson-editor-actions .ghost-action,
+.lesson-editor-actions .danger-action {
+  width: auto;
 }
 
 .lesson-drawer textarea {
