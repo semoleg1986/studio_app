@@ -28,154 +28,34 @@
           <span>После этого можно будет создавать уроки внутри модуля.</span>
         </div>
 
-        <article v-for="module in modules" :key="module.module_id" class="module-card">
-          <header class="module-head">
-            <button
-              type="button"
-              class="node-button"
-              @click="$emit('update:selectedNode', { type: 'module', moduleId: module.module_id })"
-            >
-              <span class="drag-handle">⠿</span>
-              <strong>{{ module.position }}. {{ module.title }}</strong>
-              <small>{{ module.lessons.length }} урока</small>
-              <span class="collapse-mark">⌃</span>
-            </button>
-            <div class="node-actions">
-              <span class="state-chip node-state" :data-state="module.status">
-                {{ stateLabel(module.status) }}
-              </span>
-              <button
-                v-if="module.status !== 'published' && module.status !== 'archived'"
-                class="action-pill"
-                type="button"
-                :disabled="mutating"
-                @click.stop="$emit('publish-module', module)"
-              >
-                Опубликовать
-              </button>
-              <button
-                v-if="module.status === 'archived'"
-                class="action-pill action-pill--restore"
-                type="button"
-                :disabled="mutating"
-                @click.stop="$emit('restore-module', module)"
-              >
-                Вернуть
-              </button>
-              <button
-                type="button"
-                :disabled="mutating"
-                @click.stop="$emit('move-module', module.module_id, -1)"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                :disabled="mutating"
-                @click.stop="$emit('move-module', module.module_id, 1)"
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                :disabled="mutating"
-                @click.stop="$emit('duplicate-module', module.module_id)"
-              >
-                ⧉
-              </button>
-              <button
-                class="danger-link action-pill"
-                type="button"
-                :disabled="mutating || module.status === 'archived'"
-                @click.stop="$emit('archive-module', module.module_id)"
-              >
-                В архив
-              </button>
-            </div>
-          </header>
-
-          <div class="module-edit">
-            <input
-              :value="module.title"
-              @input="updateModule(module, { title: ($event.target as HTMLInputElement).value })"
-            />
-            <input
-              :value="module.description ?? ''"
-              placeholder="Описание модуля"
-              @input="
-                updateModule(module, {
-                  description: ($event.target as HTMLInputElement).value || null
-                })
-              "
-            />
-            <button type="button" :disabled="mutating" @click="$emit('save-module', module)">
-              Сохранить
-            </button>
-          </div>
-
-          <ul class="lesson-list">
-            <li v-for="lesson in module.lessons" :key="lesson.lesson_id">
-              <LessonRow
-                :lesson="lesson"
-                :module-position="module.position"
-                :mutating="mutating"
-                :selected="
-                  selectedNode.type === 'lesson' && selectedNode.lessonId === lesson.lesson_id
-                "
-                @archive="$emit('archive-lesson', module.module_id, lesson.lesson_id)"
-                @duplicate="$emit('duplicate-lesson', module.module_id, lesson.lesson_id)"
-                @move="$emit('move-lesson', module.module_id, lesson.lesson_id, $event)"
-                @restore="$emit('restore-lesson', module.module_id, lesson)"
-                @select="
-                  $emit('update:selectedNode', {
-                    type: 'lesson',
-                    moduleId: module.module_id,
-                    lessonId: lesson.lesson_id
-                  })
-                "
-              />
-              <LessonInlineEditor
-                v-if="
-                  selectedNode.type === 'lesson' &&
-                  selectedNode.lessonId === lesson.lesson_id &&
-                  selectedLesson
-                "
-                :lesson="selectedLesson"
-                :lesson-position="lesson.position"
-                :module-position="module.position"
-                :mutating="mutating"
-                @archive="$emit('archive-lesson', module.module_id, selectedLesson.lesson_id)"
-                @publish="$emit('publish-lesson', module.module_id, selectedLesson)"
-                @restore="$emit('restore-lesson', module.module_id, selectedLesson)"
-                @save="$emit('save-selected-lesson')"
-                @update:lesson="emit('update:selectedLesson', $event)"
-              />
-            </li>
-          </ul>
-
-          <form
-            class="inline-create lesson-create"
-            @submit.prevent="$emit('add-lesson', module.module_id)"
-          >
-            <input
-              :value="lessonForm.title"
-              placeholder="Новый урок"
-              @input="updateLessonForm('title', ($event.target as HTMLInputElement).value)"
-            />
-            <input
-              :value="lessonForm.duration_minutes"
-              min="1"
-              type="number"
-              @input="
-                updateLessonForm(
-                  'duration_minutes',
-                  Number(($event.target as HTMLInputElement).value) || 15
-                )
-              "
-            />
-            <button type="submit" :disabled="mutating">+ Урок</button>
-          </form>
-        </article>
+        <ModuleCard
+          v-for="module in modules"
+          :key="module.module_id"
+          :lesson-form="lessonForm"
+          :module="module"
+          :mutating="mutating"
+          :selected-lesson="selectedLesson"
+          :selected-node="selectedNode"
+          @add-lesson="$emit('add-lesson', $event)"
+          @archive-lesson="(moduleId, lessonId) => $emit('archive-lesson', moduleId, lessonId)"
+          @archive-module="$emit('archive-module', $event)"
+          @duplicate-lesson="(moduleId, lessonId) => $emit('duplicate-lesson', moduleId, lessonId)"
+          @duplicate-module="$emit('duplicate-module', $event)"
+          @move-lesson="
+            (moduleId, lessonId, direction) => $emit('move-lesson', moduleId, lessonId, direction)
+          "
+          @move-module="(moduleId, direction) => $emit('move-module', moduleId, direction)"
+          @publish-lesson="(moduleId, lesson) => $emit('publish-lesson', moduleId, lesson)"
+          @publish-module="$emit('publish-module', $event)"
+          @restore-lesson="(moduleId, lesson) => $emit('restore-lesson', moduleId, lesson)"
+          @restore-module="$emit('restore-module', $event)"
+          @save-module="$emit('save-module', $event)"
+          @save-selected-lesson="$emit('save-selected-lesson')"
+          @update:lesson-form="$emit('update:lessonForm', $event)"
+          @update:module="(moduleArg, patch) => $emit('update:module', moduleArg, patch)"
+          @update:selected-lesson="$emit('update:selectedLesson', $event)"
+          @update:selected-node="$emit('update:selectedNode', $event)"
+        />
       </div>
     </div>
   </section>
@@ -187,9 +67,7 @@ import type {
   StudioCourseLesson,
   StudioCourseModule
 } from "~/features/course-builder/model/types";
-import LessonInlineEditor from "~/features/course-builder/ui/LessonInlineEditor.vue";
-import LessonRow from "~/features/course-builder/ui/LessonRow.vue";
-import type { CoursePublishState } from "~/shared/types/course-authoring";
+import ModuleCard from "~/features/course-builder/ui/ModuleCard.vue";
 
 type ModuleForm = {
   description: string;
@@ -248,25 +126,8 @@ const lessonCount = computed(() =>
   props.modules.reduce((count, module) => count + module.lessons.length, 0)
 );
 
-function stateLabel(state: CoursePublishState) {
-  const labels: Record<string, string> = {
-    archived: "Архив",
-    draft: "Черновик",
-    published: "Опубликовано"
-  };
-  return labels[state] ?? state;
-}
-
-function updateModule(module: StudioCourseModule, patch: ModulePatch) {
-  emit("update:module", module, patch);
-}
-
 function updateModuleForm<K extends keyof ModuleForm>(key: K, value: ModuleForm[K]) {
   emit("update:moduleForm", { [key]: value });
-}
-
-function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[K]) {
-  emit("update:lessonForm", { [key]: value });
 }
 </script>
 
@@ -288,9 +149,7 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   padding: 1.05rem;
 }
 
-.tabs-row,
-.module-head,
-.node-actions {
+.tabs-row {
   display: flex;
   align-items: center;
 }
@@ -307,17 +166,13 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
 }
 
 .tab,
-.ghost-action,
-.node-actions button,
-.lesson-actions button,
-.state-chip {
+.ghost-action {
   border: 1px solid var(--studio-line);
   background: rgb(0 0 0 / 0.12);
   color: var(--studio-muted);
 }
 
-.tab,
-.state-chip {
+.tab {
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 950;
@@ -335,9 +190,7 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   color: var(--studio-soft);
 }
 
-.ghost-action,
-.primary-action,
-.danger-action {
+.ghost-action {
   min-height: 42px;
   border-radius: 12px;
   padding: 0 1rem;
@@ -347,18 +200,6 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
 .ghost-action--small {
   min-height: 36px;
   padding-inline: 0.75rem;
-}
-
-.primary-action {
-  border: 0;
-  background: linear-gradient(135deg, var(--studio-accent), var(--studio-accent-2));
-  color: #082024;
-}
-
-.danger-action {
-  border: 1px solid rgb(237 138 125 / 0.24);
-  background: rgb(0 0 0 / 0.12);
-  color: var(--studio-danger);
 }
 
 .authoring-lane {
@@ -380,9 +221,7 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   gap: 0.6rem;
 }
 
-.inline-create button,
-.module-edit button,
-.lesson-create button {
+.inline-create button {
   border: 1px solid var(--studio-line);
   border-radius: 10px;
   background: rgb(255 255 255 / 0.9);
@@ -391,138 +230,6 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   font: inherit;
   font-weight: 950;
   padding: 0 0.9rem;
-}
-
-.module-card {
-  overflow: hidden;
-  border: 1px solid var(--studio-line);
-  border-radius: 14px;
-  background: rgb(255 255 255 / 0.035);
-}
-
-.module-head {
-  gap: 0.6rem;
-  padding: 0.52rem 0.65rem;
-  background: color-mix(in srgb, var(--studio-panel-3) 50%, transparent);
-}
-
-.node-button {
-  display: grid;
-  min-width: 0;
-  flex: 1;
-  grid-template-columns: 26px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 0.65rem;
-  border: 0;
-  background: transparent;
-  color: var(--studio-text);
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-}
-
-.node-button strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.node-button small {
-  color: var(--studio-muted);
-}
-
-.drag-handle,
-.collapse-mark {
-  color: var(--studio-dim);
-}
-
-.node-actions {
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.32rem;
-}
-
-.node-actions button {
-  display: grid;
-  min-width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 8px;
-  padding: 0 0.42rem;
-}
-
-.node-actions .action-pill {
-  min-width: auto;
-  padding-inline: 0.62rem;
-  white-space: nowrap;
-}
-
-.node-actions .danger-link {
-  border-color: rgb(237 138 125 / 0.24);
-  color: var(--studio-danger);
-}
-
-.node-actions .action-pill--restore {
-  border-color: rgb(137 220 230 / 0.36);
-  color: var(--studio-accent);
-}
-
-.node-state {
-  white-space: nowrap;
-}
-
-.module-edit,
-.lesson-create {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 0.6rem;
-  padding: 0.65rem;
-}
-
-.lesson-list {
-  display: grid;
-  gap: 0.18rem;
-  margin: 0;
-  padding: 0 0.65rem 0.65rem;
-  list-style: none;
-}
-
-.state-chip[data-state="published"] {
-  color: var(--studio-success);
-}
-
-.state-chip[data-state="archived"] {
-  color: var(--studio-dim);
-}
-
-.field {
-  display: grid;
-  gap: 0.46rem;
-}
-
-.input-shell {
-  border: 1px solid var(--studio-line);
-  border-radius: 12px;
-  background: rgb(0 0 0 / 0.12);
-}
-
-.input-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  padding-right: 0.72rem;
-}
-
-.input-shell--select {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.65rem;
-  padding: 0 0.78rem;
-}
-
-.input-shell b {
-  color: var(--studio-accent);
-  font-style: normal;
 }
 
 .empty-editor {
@@ -536,9 +243,7 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   text-align: center;
 }
 
-input,
-select,
-textarea {
+input {
   width: 100%;
   border: 1px solid var(--studio-line);
   border-radius: 10px;
@@ -550,36 +255,14 @@ textarea {
   padding: 0.78rem 0.9rem;
 }
 
-.input-shell input,
-.input-shell select {
-  border: 0;
-  background: transparent;
-}
-
-textarea {
-  min-height: 84px;
-  resize: vertical;
-}
-
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
 
 @media (max-width: 760px) {
-  .inline-create,
-  .module-edit,
-  .lesson-create,
-  .lesson-item {
+  .inline-create {
     grid-template-columns: 1fr;
-  }
-
-  .node-button {
-    grid-template-columns: 24px minmax(0, 1fr);
-  }
-
-  .lesson-drawer--inline {
-    margin-left: 0;
   }
 }
 </style>
