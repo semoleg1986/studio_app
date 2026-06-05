@@ -1,52 +1,10 @@
 <template>
   <main :class="['studio-shell', `studio-shell--${resolvedTheme}`]">
-    <aside class="icon-rail" aria-label="Studio navigation">
-      <NuxtLink class="rail-logo" to="/" aria-label="Curs Studio">C</NuxtLink>
-      <nav class="rail-nav" aria-label="Studio sections">
-        <button class="rail-action" type="button" title="Обзор">▦</button>
-        <button class="rail-action rail-action--active" type="button" title="Курсы">▤</button>
-        <button class="rail-action" type="button" title="Пользователи">◎</button>
-        <button class="rail-action" type="button" title="Аналитика">▧</button>
-        <button class="rail-action" type="button" title="Теги">◇</button>
-      </nav>
-      <div class="rail-bottom">
-        <button
-          :class="['rail-action', { 'rail-action--open': settingsOpen }]"
-          type="button"
-          title="Настройки"
-          @click="settingsOpen = !settingsOpen"
-        >
-          ⚙
-        </button>
-        <div v-if="settingsOpen" class="settings-popover" role="dialog" aria-label="Настройки">
-          <strong>Тема</strong>
-          <div class="theme-switcher" role="group" aria-label="Тема Studio">
-            <button
-              type="button"
-              :class="{ active: themeMode === 'system' }"
-              @click="setStudioTheme('system')"
-            >
-              Системная
-            </button>
-            <button
-              type="button"
-              :class="{ active: themeMode === 'light' }"
-              @click="setStudioTheme('light')"
-            >
-              Светлая
-            </button>
-            <button
-              type="button"
-              :class="{ active: themeMode === 'dark' }"
-              @click="setStudioTheme('dark')"
-            >
-              Темная
-            </button>
-          </div>
-        </div>
-        <span class="rail-user">{{ userInitial }}</span>
-      </div>
-    </aside>
+    <StudioNavigationRail
+      :theme-mode="themeMode"
+      :user-initial="userInitial"
+      @set-theme="setThemeMode"
+    />
 
     <CourseListPanel
       v-model:filter="filter"
@@ -87,42 +45,11 @@
           </div>
 
           <template v-else-if="selectedCourse && authoring">
-            <section class="course-card surface-card">
-              <div class="course-card__grid">
-                <label class="field field--title">
-                  <span>Название курса</span>
-                  <div class="input-shell input-shell--with-icon">
-                    <input v-model="courseForm.title" @blur="saveCourse" />
-                    <i>✎</i>
-                  </div>
-                </label>
-                <label class="field field--level">
-                  <span>Уровень</span>
-                  <div class="input-shell input-shell--select">
-                    <b>▥</b>
-                    <select v-model="courseForm.level" @change="saveCourse">
-                      <option value="beginner">Начальный</option>
-                      <option value="intermediate">Средний</option>
-                      <option value="advanced">Продвинутый</option>
-                    </select>
-                  </div>
-                </label>
-                <label class="field field--description">
-                  <span>Описание</span>
-                  <div class="rich-editor">
-                    <div class="rich-toolbar" aria-hidden="true">
-                      <b>B</b>
-                      <i>I</i>
-                      <span>↗</span>
-                      <span>≡</span>
-                      <span>☷</span>
-                    </div>
-                    <textarea v-model="courseForm.description" maxlength="300" @blur="saveCourse" />
-                    <small>{{ courseForm.description.length }}/300</small>
-                  </div>
-                </label>
-              </div>
-            </section>
+            <CourseDetailsCard
+              :course-form="courseForm"
+              @save="saveCourse"
+              @update:course-form="Object.assign(courseForm, $event)"
+            />
 
             <section class="structure-card surface-card">
               <header class="tabs-row">
@@ -432,14 +359,14 @@ import { useAuthSession } from "~/features/auth";
 import { useCourseBuilder } from "~/features/course-builder/model/use-course-builder";
 import type { StudioCourseLesson } from "~/features/course-builder/model/types";
 import CourseBuilderToolbar from "~/features/course-builder/ui/CourseBuilderToolbar.vue";
+import CourseDetailsCard from "~/features/course-builder/ui/CourseDetailsCard.vue";
 import CourseInspector from "~/features/course-builder/ui/CourseInspector.vue";
 import CourseListPanel from "~/features/course-builder/ui/CourseListPanel.vue";
+import StudioNavigationRail from "~/features/course-builder/ui/StudioNavigationRail.vue";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
-import type { ThemeMode } from "~/shared/lib/preferences/types";
 
 const { user } = useAuthSession();
 const { resolvedTheme, setThemeMode, themeMode } = usePreferences();
-const settingsOpen = ref(false);
 const {
   addLesson,
   addModule,
@@ -525,11 +452,6 @@ function saveSelectedLesson() {
     return;
   }
   void saveLesson(selectedNode.value.moduleId, selectedLesson.value as StudioCourseLesson);
-}
-
-function setStudioTheme(nextThemeMode: ThemeMode) {
-  setThemeMode(nextThemeMode);
-  settingsOpen.value = false;
 }
 </script>
 
