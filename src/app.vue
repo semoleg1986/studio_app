@@ -2,6 +2,10 @@
   <div class="app-shell">
     <NuxtPage v-if="isAuthPage" />
 
+    <template v-else-if="isStudioWorkspace">
+      <NuxtPage />
+    </template>
+
     <template v-else>
       <header class="app-header">
         <div class="app-header__inner">
@@ -68,6 +72,7 @@ const ogImageUrl = computed(() => `${siteUrl.value}/og-image.svg`);
 const isAuthPage = computed(
   () => route.path.startsWith("/login") || route.path.startsWith("/invite/accept")
 );
+const isStudioWorkspace = computed(() => isAuthenticated.value && route.path === "/");
 
 const localeFromQuery = computed(() => {
   const lang = route.query.lang;
