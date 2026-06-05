@@ -185,123 +185,22 @@
                   </button>
                 </div>
               </div>
-              <aside
+              <LessonInlineEditor
                 v-if="
                   selectedNode.type === 'lesson' &&
                   selectedNode.lessonId === lesson.lesson_id &&
                   selectedLesson
                 "
-                class="lesson-drawer lesson-drawer--inline"
-              >
-                <h2>Урок {{ module.position }}.{{ lesson.position }}</h2>
-                <label class="field">
-                  <span>Название урока</span>
-                  <input
-                    :value="selectedLesson.title"
-                    @input="
-                      updateSelectedLesson('title', ($event.target as HTMLInputElement).value)
-                    "
-                  />
-                </label>
-                <label class="field">
-                  <span>Тип урока</span>
-                  <div class="input-shell input-shell--select">
-                    <b>▧</b>
-                    <select
-                      :value="selectedLesson.content_type"
-                      @change="
-                        updateSelectedLesson(
-                          'content_type',
-                          ($event.target as HTMLSelectElement).value
-                        )
-                      "
-                    >
-                      <option value="video">Видео</option>
-                      <option value="text">Текст</option>
-                      <option value="quiz">Quiz</option>
-                      <option value="live">Live</option>
-                    </select>
-                  </div>
-                </label>
-                <label class="field">
-                  <span>Длительность</span>
-                  <div class="duration-field">
-                    <input
-                      :value="selectedLesson.duration_minutes ?? ''"
-                      min="1"
-                      type="number"
-                      @input="
-                        updateSelectedLesson(
-                          'duration_minutes',
-                          Number(($event.target as HTMLInputElement).value) || null
-                        )
-                      "
-                    />
-                    <span>мин</span>
-                  </div>
-                </label>
-                <label class="field">
-                  <span>Описание</span>
-                  <textarea
-                    :value="selectedLesson.description ?? ''"
-                    @input="
-                      updateSelectedLesson(
-                        'description',
-                        ($event.target as HTMLTextAreaElement).value || null
-                      )
-                    "
-                  />
-                </label>
-                <label class="check-row">
-                  <input
-                    :checked="selectedLesson.is_preview"
-                    type="checkbox"
-                    @change="
-                      updateSelectedLesson(
-                        'is_preview',
-                        ($event.target as HTMLInputElement).checked
-                      )
-                    "
-                  />
-                  Preview урок
-                </label>
-                <div class="lesson-editor-actions">
-                  <button
-                    v-if="selectedLesson.status !== 'published'"
-                    class="ghost-action"
-                    type="button"
-                    :disabled="mutating || selectedLesson.status === 'archived'"
-                    @click="$emit('publish-lesson', module.module_id, selectedLesson)"
-                  >
-                    Опубликовать урок
-                  </button>
-                  <button
-                    v-if="selectedLesson.status === 'archived'"
-                    class="ghost-action"
-                    type="button"
-                    :disabled="mutating"
-                    @click="$emit('restore-lesson', module.module_id, selectedLesson)"
-                  >
-                    Вернуть урок
-                  </button>
-                  <button
-                    class="danger-action"
-                    type="button"
-                    :disabled="mutating || selectedLesson.status === 'archived'"
-                    @click="$emit('archive-lesson', module.module_id, selectedLesson.lesson_id)"
-                  >
-                    В архив
-                  </button>
-                  <button
-                    class="primary-action"
-                    type="button"
-                    :disabled="mutating || selectedNode.type !== 'lesson'"
-                    @click="$emit('save-selected-lesson')"
-                  >
-                    Сохранить урок
-                  </button>
-                </div>
-              </aside>
+                :lesson="selectedLesson"
+                :lesson-position="lesson.position"
+                :module-position="module.position"
+                :mutating="mutating"
+                @archive="$emit('archive-lesson', module.module_id, selectedLesson.lesson_id)"
+                @publish="$emit('publish-lesson', module.module_id, selectedLesson)"
+                @restore="$emit('restore-lesson', module.module_id, selectedLesson)"
+                @save="$emit('save-selected-lesson')"
+                @update:lesson="emit('update:selectedLesson', $event)"
+              />
             </li>
           </ul>
 
@@ -339,6 +238,7 @@ import type {
   StudioCourseLesson,
   StudioCourseModule
 } from "~/features/course-builder/model/types";
+import LessonInlineEditor from "~/features/course-builder/ui/LessonInlineEditor.vue";
 import type { CoursePublishState } from "~/shared/types/course-authoring";
 
 type ModuleForm = {
@@ -427,13 +327,6 @@ function updateModuleForm<K extends keyof ModuleForm>(key: K, value: ModuleForm[
 
 function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[K]) {
   emit("update:lessonForm", { [key]: value });
-}
-
-function updateSelectedLesson<K extends keyof LessonPatch>(
-  key: K,
-  value: NonNullable<LessonPatch[K]>
-) {
-  emit("update:selectedLesson", { [key]: value } as LessonPatch);
 }
 </script>
 
@@ -597,10 +490,7 @@ function updateSelectedLesson<K extends keyof LessonPatch>(
   white-space: nowrap;
 }
 
-.node-button small,
-.field span,
-.field small,
-.lesson-drawer p {
+.node-button small {
   color: var(--studio-muted);
 }
 
@@ -716,35 +606,12 @@ function updateSelectedLesson<K extends keyof LessonPatch>(
   color: var(--studio-dim);
 }
 
-.lesson-drawer {
-  display: grid;
-  gap: 0.8rem;
-  padding: 1rem;
-  border: 1px solid var(--studio-line);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--studio-panel-2) 82%, transparent);
-}
-
-.lesson-drawer--inline {
-  margin: 0.48rem 0.65rem 0.9rem 3.2rem;
-  box-shadow: 0 18px 48px rgb(0 0 0 / 0.18);
-}
-
-.lesson-drawer h2 {
-  margin: 0;
-  color: var(--studio-text);
-  font-size: 1.25rem;
-  font-weight: 950;
-  letter-spacing: -0.035em;
-}
-
 .field {
   display: grid;
   gap: 0.46rem;
 }
 
-.input-shell,
-.duration-field {
+.input-shell {
   border: 1px solid var(--studio-line);
   border-radius: 12px;
   background: rgb(0 0 0 / 0.12);
@@ -766,38 +633,6 @@ function updateSelectedLesson<K extends keyof LessonPatch>(
 .input-shell b {
   color: var(--studio-accent);
   font-style: normal;
-}
-
-.duration-field {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  padding-right: 0.8rem;
-}
-
-.duration-field span {
-  color: var(--studio-muted);
-}
-
-.check-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--studio-muted);
-  font-weight: 900;
-}
-
-.lesson-editor-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.55rem;
-}
-
-.lesson-editor-actions .primary-action,
-.lesson-editor-actions .ghost-action,
-.lesson-editor-actions .danger-action {
-  width: auto;
 }
 
 .empty-editor {
@@ -826,8 +661,7 @@ textarea {
 }
 
 .input-shell input,
-.input-shell select,
-.duration-field input {
+.input-shell select {
   border: 0;
   background: transparent;
 }
