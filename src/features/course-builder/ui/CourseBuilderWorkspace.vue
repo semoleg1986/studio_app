@@ -1,5 +1,5 @@
 <template>
-  <main class="studio-shell">
+  <main :class="['studio-shell', `studio-shell--${resolvedTheme}`]">
     <aside class="icon-rail" aria-label="Studio navigation">
       <NuxtLink class="rail-logo" to="/" aria-label="Curs Studio">C</NuxtLink>
       <nav class="rail-nav" aria-label="Studio sections">
@@ -10,14 +10,46 @@
         <button class="rail-action" type="button" title="Теги">◇</button>
       </nav>
       <div class="rail-bottom">
-        <NuxtLink class="rail-action" to="/settings" title="Настройки">⚙</NuxtLink>
+        <button
+          :class="['rail-action', { 'rail-action--open': settingsOpen }]"
+          type="button"
+          title="Настройки"
+          @click="settingsOpen = !settingsOpen"
+        >
+          ⚙
+        </button>
+        <div v-if="settingsOpen" class="settings-popover" role="dialog" aria-label="Настройки">
+          <strong>Тема</strong>
+          <div class="theme-switcher" role="group" aria-label="Тема Studio">
+            <button
+              type="button"
+              :class="{ active: themeMode === 'system' }"
+              @click="setStudioTheme('system')"
+            >
+              Системная
+            </button>
+            <button
+              type="button"
+              :class="{ active: themeMode === 'light' }"
+              @click="setStudioTheme('light')"
+            >
+              Светлая
+            </button>
+            <button
+              type="button"
+              :class="{ active: themeMode === 'dark' }"
+              @click="setStudioTheme('dark')"
+            >
+              Темная
+            </button>
+          </div>
+        </div>
         <span class="rail-user">{{ userInitial }}</span>
       </div>
     </aside>
 
     <aside class="course-sidebar">
       <header class="sidebar-brand">
-        <div class="brand-mark">C</div>
         <div>
           <strong>Curs Studio</strong>
           <span>Студия авторов</span>
@@ -198,7 +230,7 @@
                 </button>
               </header>
 
-              <div class="authoring-lane">
+              <div :class="['authoring-lane', { 'authoring-lane--with-lesson': selectedLesson }]">
                 <div class="modules-column">
                   <form class="inline-create" @submit.prevent="addModule">
                     <input v-model="moduleForm.title" placeholder="Название нового модуля" />
@@ -342,57 +374,51 @@
                   </article>
                 </div>
 
-                <aside class="lesson-drawer">
-                  <template v-if="selectedLesson">
-                    <h2>Урок</h2>
-                    <label class="field">
-                      <span>Название урока</span>
-                      <input v-model="selectedLesson.title" />
-                    </label>
-                    <label class="field">
-                      <span>Тип урока</span>
-                      <div class="input-shell input-shell--select">
-                        <b>▧</b>
-                        <select v-model="selectedLesson.content_type">
-                          <option value="video">Видео</option>
-                          <option value="text">Текст</option>
-                          <option value="quiz">Quiz</option>
-                          <option value="live">Live</option>
-                        </select>
-                      </div>
-                    </label>
-                    <label class="field">
-                      <span>Длительность</span>
-                      <div class="duration-field">
-                        <input
-                          v-model.number="selectedLesson.duration_minutes"
-                          min="1"
-                          type="number"
-                        />
-                        <span>мин</span>
-                      </div>
-                    </label>
-                    <label class="field">
-                      <span>Описание</span>
-                      <textarea v-model="selectedLesson.description" />
-                    </label>
-                    <label class="check-row">
-                      <input v-model="selectedLesson.is_preview" type="checkbox" />
-                      Preview урок
-                    </label>
-                    <button
-                      class="primary-action"
-                      type="button"
-                      :disabled="mutating || !selectedNodeIsLesson"
-                      @click="saveSelectedLesson"
-                    >
-                      Сохранить урок
-                    </button>
-                  </template>
-                  <template v-else>
-                    <h2>Урок</h2>
-                    <p>Выберите урок в структуре, чтобы открыть быстрый редактор.</p>
-                  </template>
+                <aside v-if="selectedLesson" class="lesson-drawer">
+                  <h2>Урок</h2>
+                  <label class="field">
+                    <span>Название урока</span>
+                    <input v-model="selectedLesson.title" />
+                  </label>
+                  <label class="field">
+                    <span>Тип урока</span>
+                    <div class="input-shell input-shell--select">
+                      <b>▧</b>
+                      <select v-model="selectedLesson.content_type">
+                        <option value="video">Видео</option>
+                        <option value="text">Текст</option>
+                        <option value="quiz">Quiz</option>
+                        <option value="live">Live</option>
+                      </select>
+                    </div>
+                  </label>
+                  <label class="field">
+                    <span>Длительность</span>
+                    <div class="duration-field">
+                      <input
+                        v-model.number="selectedLesson.duration_minutes"
+                        min="1"
+                        type="number"
+                      />
+                      <span>мин</span>
+                    </div>
+                  </label>
+                  <label class="field">
+                    <span>Описание</span>
+                    <textarea v-model="selectedLesson.description" />
+                  </label>
+                  <label class="check-row">
+                    <input v-model="selectedLesson.is_preview" type="checkbox" />
+                    Preview урок
+                  </label>
+                  <button
+                    class="primary-action"
+                    type="button"
+                    :disabled="mutating || !selectedNodeIsLesson"
+                    @click="saveSelectedLesson"
+                  >
+                    Сохранить урок
+                  </button>
                 </aside>
               </div>
             </section>
@@ -472,6 +498,8 @@ import type { CoursePublishState } from "~/shared/types/course-authoring";
 import { useAuthSession } from "~/features/auth";
 import { useCourseBuilder } from "~/features/course-builder/model/use-course-builder";
 import type { StudioCourseLesson } from "~/features/course-builder/model/types";
+import { usePreferences } from "~/shared/lib/preferences/use-preferences";
+import type { ThemeMode } from "~/shared/lib/preferences/types";
 
 const filters: Array<{ label: string; value: "all" | "draft" | "published" | "archived" }> = [
   { label: "Все", value: "all" },
@@ -481,6 +509,8 @@ const filters: Array<{ label: string; value: "all" | "draft" | "published" | "ar
 ];
 
 const { user } = useAuthSession();
+const { resolvedTheme, setThemeMode, themeMode } = usePreferences();
+const settingsOpen = ref(false);
 const {
   addLesson,
   addModule,
@@ -578,6 +608,11 @@ function saveSelectedLesson() {
   }
   void saveLesson(selectedNode.value.moduleId, selectedLesson.value as StudioCourseLesson);
 }
+
+function setStudioTheme(nextThemeMode: ThemeMode) {
+  setThemeMode(nextThemeMode);
+  settingsOpen.value = false;
+}
 </script>
 
 <style scoped>
@@ -615,7 +650,8 @@ function saveSelectedLesson() {
   line-height: 1.38;
 }
 
-:global([data-theme="light"]) .studio-shell {
+:global([data-theme="light"]) .studio-shell,
+.studio-shell--light {
   --studio-bg: #eef4f5;
   --studio-bg-2: #f8fbfa;
   --studio-panel: #ffffff;
@@ -653,15 +689,13 @@ function saveSelectedLesson() {
 }
 
 .rail-logo,
-.brand-mark,
 .rail-user,
 .rail-action {
   display: grid;
   place-items: center;
 }
 
-.rail-logo,
-.brand-mark {
+.rail-logo {
   border: 1px solid rgb(137 220 230 / 0.35);
   border-radius: 14px;
   background: linear-gradient(135deg, #9ce7ee, #c7a16f);
@@ -691,6 +725,7 @@ function saveSelectedLesson() {
 
 .rail-bottom {
   align-content: end;
+  position: relative;
 }
 
 .rail-action {
@@ -709,9 +744,58 @@ function saveSelectedLesson() {
 }
 
 .rail-action:hover,
-.rail-action--active {
+.rail-action--active,
+.rail-action--open {
   border-color: var(--studio-line);
   background: rgb(137 220 230 / 0.11);
+  color: var(--studio-accent);
+}
+
+.settings-popover {
+  position: absolute;
+  bottom: 46px;
+  left: calc(100% + 0.9rem);
+  z-index: 40;
+  display: grid;
+  width: 230px;
+  gap: 0.7rem;
+  padding: 0.8rem;
+  border: 1px solid var(--studio-line-strong);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--studio-panel) 96%, transparent);
+  box-shadow: var(--studio-shadow);
+}
+
+.settings-popover strong {
+  color: var(--studio-text);
+  font-weight: 950;
+}
+
+.theme-switcher {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.theme-switcher button {
+  width: 100%;
+  border: 1px solid var(--studio-line);
+  border-radius: 10px;
+  background: rgb(0 0 0 / 0.12);
+  color: var(--studio-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  padding: 0.58rem 0.72rem;
+  text-align: left;
+}
+
+.studio-shell--light .theme-switcher button {
+  background: rgb(255 255 255 / 0.72);
+}
+
+.theme-switcher button.active {
+  border-color: rgb(137 220 230 / 0.5);
+  background: rgb(137 220 230 / 0.14);
   color: var(--studio-accent);
 }
 
@@ -749,11 +833,6 @@ function saveSelectedLesson() {
   gap: 0.85rem;
   min-height: 78px;
   padding: 0.95rem 1.15rem;
-}
-
-.brand-mark {
-  width: 36px;
-  height: 36px;
 }
 
 .sidebar-brand strong,
@@ -811,7 +890,8 @@ function saveSelectedLesson() {
   padding: 0 0.48rem 0 0.72rem;
 }
 
-:global([data-theme="light"]) .search-box {
+:global([data-theme="light"]) .search-box,
+.studio-shell--light .search-box {
   background: rgb(255 255 255 / 0.72);
 }
 
@@ -864,7 +944,16 @@ function saveSelectedLesson() {
 :global([data-theme="light"]) .menu-button,
 :global([data-theme="light"]) .activity-button,
 :global([data-theme="light"]) .node-actions button,
-:global([data-theme="light"]) .lesson-actions button {
+:global([data-theme="light"]) .lesson-actions button,
+.studio-shell--light .filters button,
+.studio-shell--light .state-chip,
+.studio-shell--light .tab,
+.studio-shell--light .ghost-action,
+.studio-shell--light .history-buttons button,
+.studio-shell--light .menu-button,
+.studio-shell--light .activity-button,
+.studio-shell--light .node-actions button,
+.studio-shell--light .lesson-actions button {
   background: rgb(255 255 255 / 0.72);
 }
 
@@ -1153,7 +1242,12 @@ button:disabled {
 :global([data-theme="light"]) .inspector-card,
 :global([data-theme="light"]) .lesson-drawer,
 :global([data-theme="light"]) .course-item,
-:global([data-theme="light"]) .create-course form {
+:global([data-theme="light"]) .create-course form,
+.studio-shell--light .surface-card,
+.studio-shell--light .inspector-card,
+.studio-shell--light .lesson-drawer,
+.studio-shell--light .course-item,
+.studio-shell--light .create-course form {
   background: rgb(255 255 255 / 0.8);
 }
 
@@ -1190,7 +1284,10 @@ button:disabled {
 
 :global([data-theme="light"]) .input-shell,
 :global([data-theme="light"]) .rich-editor,
-:global([data-theme="light"]) .duration-field {
+:global([data-theme="light"]) .duration-field,
+.studio-shell--light .input-shell,
+.studio-shell--light .rich-editor,
+.studio-shell--light .duration-field {
   background: rgb(255 255 255 / 0.72);
 }
 
@@ -1292,8 +1389,11 @@ select:focus,
 
 .authoring-lane {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 308px;
   gap: 1rem;
+}
+
+.authoring-lane--with-lesson {
+  grid-template-columns: minmax(540px, 1fr) minmax(360px, 420px);
 }
 
 .modules-column {
