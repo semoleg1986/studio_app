@@ -4,6 +4,8 @@ import type {
   AddModulePayload,
   CourseMutationResult,
   CreateCoursePayload,
+  ReorderLessonsPayload,
+  ReorderModulesPayload,
   StudioCourseAuthoring,
   StudioCourseListResponse,
   UpdateCoursePayload,
@@ -51,6 +53,24 @@ export function useCourseBuilderClient() {
         payload
       );
     },
+    archiveModule(courseId: string, moduleId: string) {
+      return api.post<CourseMutationResult, Record<string, never>>(
+        `/admin/courses/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/archive`,
+        {}
+      );
+    },
+    duplicateModule(courseId: string, moduleId: string) {
+      return api.post<CourseMutationResult, Record<string, never>>(
+        `/admin/courses/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/duplicate`,
+        {}
+      );
+    },
+    reorderModules(courseId: string, payload: ReorderModulesPayload) {
+      return api.post<CourseMutationResult, ReorderModulesPayload>(
+        `/admin/courses/${encodeURIComponent(courseId)}/modules/reorder`,
+        payload
+      );
+    },
     addLesson(courseId: string, moduleId: string, payload: AddLessonPayload) {
       return api.post<CourseMutationResult, AddLessonPayload>(
         `/admin/courses/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons`,
@@ -65,6 +85,24 @@ export function useCourseBuilderClient() {
     ) {
       return api.patch<CourseMutationResult, UpdateLessonPayload>(
         `/admin/courses/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons/${encodeURIComponent(lessonId)}`,
+        payload
+      );
+    },
+    archiveLesson(courseId: string, moduleId: string, lessonId: string) {
+      return api.post<CourseMutationResult, Record<string, never>>(
+        `/admin/courses/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons/${encodeURIComponent(lessonId)}/archive`,
+        {}
+      );
+    },
+    duplicateLesson(courseId: string, moduleId: string, lessonId: string) {
+      return api.post<CourseMutationResult, Record<string, never>>(
+        `/admin/courses/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons/${encodeURIComponent(lessonId)}/duplicate`,
+        {}
+      );
+    },
+    reorderLessons(courseId: string, moduleId: string, payload: ReorderLessonsPayload) {
+      return api.post<CourseMutationResult, ReorderLessonsPayload>(
+        `/admin/courses/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons/reorder`,
         payload
       );
     },

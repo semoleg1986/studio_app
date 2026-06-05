@@ -100,19 +100,16 @@ export function useCourseBuilder() {
   });
 
   const readiness = computed(() => {
-    const course = selectedCourse.value;
-    return [
-      { label: "Название", done: Boolean(course?.title?.trim()) },
-      { label: "Описание", done: Boolean(course?.description?.trim()) },
-      { label: "Минимум 1 модуль", done: modules.value.length > 0 },
-      {
-        label: "Минимум 1 урок",
-        done: modules.value.some((module) => module.lessons.length > 0)
-      },
-      { label: "Цена проверена", done: course !== null && course.price >= 0 }
-    ];
+    return (
+      authoring.value?.readiness.checks.map((check) => ({
+        detail: check.detail,
+        done: check.passed,
+        label: check.label
+      })) ?? []
+    );
   });
-  const readyToPublish = computed(() => readiness.value.every((item) => item.done));
+  const readyToPublish = computed(() => authoring.value?.readiness.ready_to_publish ?? false);
+  const hasUnpublishedChanges = computed(() => authoring.value?.has_unpublished_changes ?? false);
 
   watch(authoring, (value) => {
     if (!value) {
@@ -268,6 +265,46 @@ export function useCourseBuilder() {
     );
   }
 
+  async function archiveModule(moduleId: string) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    await runMutation(() => api.archiveModule(selectedCourseId.value as string, moduleId));
+  }
+
+  async function duplicateModule(moduleId: string) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    await runMutation(() => api.duplicateModule(selectedCourseId.value as string, moduleId));
+  }
+
+  async function moveModule(moduleId: string, direction: -1 | 1) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const current = modules.value;
+    const index = current.findIndex((module) => module.module_id === moduleId);
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= current.length) {
+      return;
+    }
+    const next = [...current];
+    const [moved] = next.splice(index, 1);
+    if (!moved) {
+      return;
+    }
+    next.splice(targetIndex, 0, moved);
+    await runMutation(() =>
+      api.reorderModules(selectedCourseId.value as string, {
+        items: next.map((module, itemIndex) => ({
+          module_id: module.module_id,
+          position: itemIndex + 1
+        }))
+      })
+    );
+  }
+
   async function addLesson(moduleId: string) {
     if (!selectedCourseId.value || !lessonForm.title.trim()) {
       error.value = "Введите название урока";
@@ -305,6 +342,53 @@ export function useCourseBuilder() {
     );
   }
 
+  async function archiveLesson(moduleId: string, lessonId: string) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    await runMutation(() =>
+      api.archiveLesson(selectedCourseId.value as string, moduleId, lessonId)
+    );
+  }
+
+  async function duplicateLesson(moduleId: string, lessonId: string) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    await runMutation(() =>
+      api.duplicateLesson(selectedCourseId.value as string, moduleId, lessonId)
+    );
+  }
+
+  async function moveLesson(moduleId: string, lessonId: string, direction: -1 | 1) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const module = modules.value.find((item) => item.module_id === moduleId);
+    if (!module) {
+      return;
+    }
+    const index = module.lessons.findIndex((lesson) => lesson.lesson_id === lessonId);
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= module.lessons.length) {
+      return;
+    }
+    const next = [...module.lessons];
+    const [moved] = next.splice(index, 1);
+    if (!moved) {
+      return;
+    }
+    next.splice(targetIndex, 0, moved);
+    await runMutation(() =>
+      api.reorderLessons(selectedCourseId.value as string, moduleId, {
+        items: next.map((lesson, itemIndex) => ({
+          lesson_id: lesson.lesson_id,
+          position: itemIndex + 1
+        }))
+      })
+    );
+  }
+
   async function publishCourse() {
     if (!selectedCourseId.value) {
       return;
@@ -331,6 +415,8 @@ export function useCourseBuilder() {
     addLesson,
     addModule,
     archiveCourse,
+    archiveLesson,
+    archiveModule,
     authoring,
     courseForm,
     courses,
@@ -338,12 +424,15 @@ export function useCourseBuilder() {
     createCourseForm,
     error,
     filter,
+    hasUnpublishedChanges,
     lastSavedAt,
     lessonForm,
     loadingAuthoring,
     loadingCourses,
     moduleForm,
     modules,
+    moveLesson,
+    moveModule,
     mutating,
     publishCourse,
     readiness,
@@ -353,6 +442,8 @@ export function useCourseBuilder() {
     saveCourse,
     saveLesson,
     saveModule,
+    duplicateLesson,
+    duplicateModule,
     search,
     selectCourse,
     selectedCourse,

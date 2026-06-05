@@ -179,32 +179,96 @@
                 </button>
               </div>
 
+              <div class="node-actions">
+                <button
+                  type="button"
+                  :disabled="mutating"
+                  @click="moveModule(module.module_id, -1)"
+                >
+                  ↑
+                </button>
+                <button type="button" :disabled="mutating" @click="moveModule(module.module_id, 1)">
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  :disabled="mutating"
+                  @click="duplicateModule(module.module_id)"
+                >
+                  Дублировать
+                </button>
+                <button
+                  class="danger-link"
+                  type="button"
+                  :disabled="mutating || module.status === 'archived'"
+                  @click="archiveModule(module.module_id)"
+                >
+                  Архив
+                </button>
+              </div>
+
               <ul class="lesson-list">
                 <li v-for="lesson in module.lessons" :key="lesson.lesson_id">
-                  <button
-                    type="button"
+                  <div
                     :class="[
-                      'lesson-item',
+                      'lesson-row',
                       {
                         active:
                           selectedNode.type === 'lesson' &&
                           selectedNode.lessonId === lesson.lesson_id
                       }
                     ]"
-                    @click="
-                      selectedNode = {
-                        type: 'lesson',
-                        moduleId: module.module_id,
-                        lessonId: lesson.lesson_id
-                      }
-                    "
                   >
-                    <span>{{ lesson.position }}</span>
-                    <strong>{{ lesson.title }}</strong>
-                    <small
-                      >{{ lesson.content_type }} · {{ lesson.duration_minutes ?? "—" }} мин</small
+                    <button
+                      type="button"
+                      class="lesson-item"
+                      @click="
+                        selectedNode = {
+                          type: 'lesson',
+                          moduleId: module.module_id,
+                          lessonId: lesson.lesson_id
+                        }
+                      "
                     >
-                  </button>
+                      <span>{{ lesson.position }}</span>
+                      <strong>{{ lesson.title }}</strong>
+                      <small>
+                        {{ lesson.content_type }} · {{ lesson.duration_minutes ?? "—" }} мин ·
+                        {{ lesson.status }}
+                      </small>
+                    </button>
+                    <div class="lesson-actions">
+                      <button
+                        type="button"
+                        :disabled="mutating"
+                        @click="moveLesson(module.module_id, lesson.lesson_id, -1)"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        :disabled="mutating"
+                        @click="moveLesson(module.module_id, lesson.lesson_id, 1)"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        :disabled="mutating"
+                        @click="duplicateLesson(module.module_id, lesson.lesson_id)"
+                      >
+                        ⧉
+                      </button>
+                      <button
+                        class="danger-link"
+                        type="button"
+                        :disabled="mutating || lesson.status === 'archived'"
+                        @click="archiveLesson(module.module_id, lesson.lesson_id)"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
                 </li>
               </ul>
 
@@ -237,15 +301,20 @@
           <div class="publish-card">
             <span class="state-chip">{{ stateLabel(selectedCourse.publish_state) }}</span>
             <strong>{{ selectedCourse.title }}</strong>
-            <small
-              >v{{ selectedCourse.version }} · {{ formatDate(selectedCourse.updated_at) }}</small
-            >
+            <small>
+              draft v{{ authoring.draft_version }} · published
+              {{ authoring.published_version ?? "—" }} ·
+              {{ hasUnpublishedChanges ? "есть изменения" : "без изменений" }}
+            </small>
           </div>
 
           <ul class="checklist">
             <li v-for="item in readiness" :key="item.label" :class="{ done: item.done }">
               <span>{{ item.done ? "✓" : "!" }}</span>
-              {{ item.label }}
+              <div>
+                <strong>{{ item.label }}</strong>
+                <small v-if="item.detail">{{ item.detail }}</small>
+              </div>
             </li>
           </ul>
 
@@ -325,6 +394,8 @@ const {
   addLesson,
   addModule,
   archiveCourse,
+  archiveLesson,
+  archiveModule,
   authoring,
   courseForm,
   courses,
@@ -332,12 +403,15 @@ const {
   createCourseForm,
   error,
   filter,
+  hasUnpublishedChanges,
   lastSavedAt,
   lessonForm,
   loadingAuthoring,
   loadingCourses,
   moduleForm,
   modules,
+  moveLesson,
+  moveModule,
   mutating,
   publishCourse,
   readiness,
@@ -347,6 +421,8 @@ const {
   saveCourse,
   saveLesson,
   saveModule,
+  duplicateLesson,
+  duplicateModule,
   search,
   selectCourse,
   selectedCourse,
@@ -365,14 +441,6 @@ function stateLabel(state: CoursePublishState) {
     published: "Опубликован"
   };
   return labels[state] ?? state;
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  }).format(new Date(value));
 }
 
 function formatTime(value: string) {
@@ -505,6 +573,8 @@ function saveSelectedLesson() {
 .ghost-action,
 .inline-create button,
 .module-edit button,
+.node-actions button,
+.lesson-actions button,
 .primary-action,
 .danger-action {
   border: 0;
@@ -801,6 +871,38 @@ button:disabled {
   gap: 0.55rem;
 }
 
+.node-actions,
+.lesson-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.node-actions {
+  margin-top: -0.25rem;
+}
+
+.node-actions button,
+.lesson-actions button {
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+  color: var(--c-muted);
+  padding: 0.42rem 0.62rem;
+}
+
+.node-actions button:hover,
+.lesson-actions button:hover {
+  border-color: color-mix(in srgb, #0891b2 40%, var(--c-border));
+  color: var(--c-text);
+}
+
+.node-actions .danger-link,
+.lesson-actions .danger-link {
+  border-color: color-mix(in srgb, #ef4444 40%, var(--c-border));
+  color: var(--c-danger);
+}
+
 .module-card {
   border: 1px solid var(--c-border);
 }
@@ -818,11 +920,27 @@ button:disabled {
   margin-top: 0.2rem;
 }
 
+.lesson-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 18px;
+}
+
+.lesson-row:hover,
+.lesson-row.active {
+  border-color: color-mix(in srgb, #0891b2 35%, var(--c-border));
+  background: rgb(8 145 178 / 0.08);
+}
+
 .lesson-item {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.6rem;
+  border: 0;
   padding: 0.65rem 0.75rem;
 }
 
@@ -854,10 +972,20 @@ button:disabled {
 
 .checklist li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   color: var(--c-muted);
   font-weight: 850;
+}
+
+.checklist strong,
+.checklist small {
+  display: block;
+}
+
+.checklist small {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
 }
 
 .checklist span {
@@ -944,6 +1072,10 @@ button:disabled {
 
   .lesson-item small {
     grid-column: 2;
+  }
+
+  .lesson-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

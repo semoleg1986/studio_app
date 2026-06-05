@@ -87,7 +87,9 @@ export interface AdminCourseAuthoringLesson {
   status: string;
   position: number;
   created_at: string;
+  created_by: string;
   updated_at: string;
+  updated_by: string;
   version: number;
 }
 
@@ -102,13 +104,31 @@ export interface AdminCourseAuthoringModule {
   lessons_count: number;
   lessons: AdminCourseAuthoringLesson[];
   created_at: string;
+  created_by: string;
   updated_at: string;
+  updated_by: string;
   version: number;
+}
+
+export interface AdminCourseAuthoringReadinessCheck {
+  code: string;
+  label: string;
+  passed: boolean;
+  detail: string | null;
+}
+
+export interface AdminCourseAuthoringReadiness {
+  ready_to_publish: boolean;
+  checks: AdminCourseAuthoringReadinessCheck[];
 }
 
 export interface AdminCourseAuthoringResponse {
   course: CourseResponse;
   modules: AdminCourseAuthoringModule[];
+  readiness: AdminCourseAuthoringReadiness;
+  has_unpublished_changes: boolean;
+  draft_version: number;
+  published_version: number | null;
   version: number;
   created_at: string;
   updated_at: string;

@@ -70,3 +70,21 @@ export type UpdateLessonPayload = Partial<{
 }>;
 
 export type CourseMutationResult = CourseResponse;
+
+export interface ReorderModuleItemPayload {
+  module_id: string;
+  position: number;
+}
+
+export interface ReorderLessonItemPayload {
+  lesson_id: string;
+  position: number;
+}
+
+export interface ReorderModulesPayload {
+  items: ReorderModuleItemPayload[];
+}
+
+export interface ReorderLessonsPayload {
+  items: ReorderLessonItemPayload[];
+}
