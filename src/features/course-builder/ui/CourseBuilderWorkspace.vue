@@ -48,118 +48,29 @@
       </div>
     </aside>
 
-    <aside class="course-sidebar">
-      <header class="sidebar-brand">
-        <div>
-          <strong>Curs Studio</strong>
-          <span>Студия авторов</span>
-        </div>
-      </header>
-
-      <section class="course-panel-head">
-        <h1>Курсы</h1>
-        <label class="search-box">
-          <span>⌕</span>
-          <input v-model="search" placeholder="Поиск по курсам..." @keyup.enter="refreshCourses" />
-          <button type="button" :disabled="loadingCourses" title="Обновить" @click="refreshCourses">
-            ⌁
-          </button>
-        </label>
-
-        <div class="filters" role="group" aria-label="Фильтр курсов">
-          <button
-            v-for="item in filters"
-            :key="item.value"
-            type="button"
-            :class="{ active: filter === item.value }"
-            @click="filter = item.value"
-          >
-            {{ item.label }}
-            <span v-if="item.value === 'all'">{{ total }}</span>
-          </button>
-        </div>
-
-        <details class="create-course">
-          <summary>
-            <span>＋</span>
-            Создать курс
-          </summary>
-          <form @submit.prevent="createCourse">
-            <input v-model="createCourseForm.title" placeholder="Название курса" />
-            <textarea v-model="createCourseForm.description" placeholder="Короткое описание" />
-            <div class="form-row">
-              <select v-model="createCourseForm.level">
-                <option value="beginner">Начальный</option>
-                <option value="intermediate">Средний</option>
-                <option value="advanced">Продвинутый</option>
-              </select>
-              <input v-model.number="createCourseForm.price" min="0" step="1" type="number" />
-            </div>
-            <button class="primary-action" type="submit" :disabled="mutating">Создать</button>
-          </form>
-        </details>
-      </section>
-
-      <div v-if="loadingCourses" class="skeleton-list" aria-label="Загрузка курсов">
-        <span v-for="item in 4" :key="item" />
-      </div>
-      <div v-else-if="courses.length === 0" class="empty-sidebar">
-        <strong>Пока пусто</strong>
-        <span>Создайте первый курс.</span>
-      </div>
-      <ul v-else class="course-list">
-        <li v-for="course in courses" :key="course.course_id">
-          <button
-            type="button"
-            :class="['course-item', { active: course.course_id === selectedCourseId }]"
-            @click="selectCourse(course.course_id)"
-          >
-            <span class="course-item__menu">⋮</span>
-            <strong>{{ course.title }}</strong>
-            <span class="state-chip" :data-state="course.publish_state">
-              {{ stateLabel(course.publish_state) }}
-            </span>
-            <small>Модулей: {{ course.modules_count }} · Уроков: {{ course.lessons_total }}</small>
-            <small>Обновлен {{ formatDate(course.updated_at) }}</small>
-          </button>
-        </li>
-      </ul>
-    </aside>
+    <CourseListPanel
+      v-model:filter="filter"
+      v-model:search="search"
+      :courses="courses"
+      :create-course-form="createCourseForm"
+      :loading-courses="loadingCourses"
+      :mutating="mutating"
+      :selected-course-id="selectedCourseId"
+      :total="total"
+      @create="createCourse"
+      @refresh="refreshCourses"
+      @select="selectCourse"
+      @update:create-course-form="Object.assign(createCourseForm, $event)"
+    />
 
     <section class="workspace-main">
-      <header class="workspace-toolbar">
-        <div class="breadcrumbs">
-          <span>Курсы</span>
-          <span>›</span>
-          <strong>{{ selectedCourse?.title ?? "Новый курс" }}</strong>
-          <span v-if="selectedCourse" class="state-chip" :data-state="selectedCourse.publish_state">
-            {{ stateLabel(selectedCourse.publish_state) }}
-          </span>
-        </div>
-        <div class="toolbar-actions">
-          <span v-if="lastSavedAt" class="save-state"
-            >✓ Сохранено {{ formatTime(lastSavedAt) }}</span
-          >
-          <span v-else class="save-state">{{ mutating ? "Сохраняем..." : "Сохранено" }}</span>
-          <button class="activity-button" type="button" title="Состояние">⌁</button>
-          <div class="history-buttons" aria-hidden="true">
-            <button type="button" disabled>↶</button>
-            <button type="button" disabled>↷</button>
-          </div>
-          <button class="ghost-action" type="button" :disabled="!selectedCourse">
-            Предпросмотр
-          </button>
-          <button
-            class="primary-action toolbar-publish"
-            type="button"
-            :disabled="mutating || !readyToPublish"
-            @click="publishCourse"
-          >
-            Опубликовать
-          </button>
-          <button class="menu-button" type="button">⋮</button>
-        </div>
-      </header>
+      <CourseBuilderToolbar
+        :last-saved-at="lastSavedAt"
+        :mutating="mutating"
+        :ready-to-publish="readyToPublish"
+        :selected-course="selectedCourse"
+        @publish="publishCourse"
+      />
 
       <p v-if="error" class="problem">
         <strong>Ошибка</strong>
@@ -268,6 +179,15 @@
                           Опубликовать
                         </button>
                         <button
+                          v-if="module.status === 'archived'"
+                          class="action-pill action-pill--restore"
+                          type="button"
+                          :disabled="mutating"
+                          @click.stop="restoreModule(module)"
+                        >
+                          Вернуть
+                        </button>
+                        <button
                           type="button"
                           :disabled="mutating"
                           @click.stop="moveModule(module.module_id, -1)"
@@ -373,6 +293,15 @@
                             >
                               В архив
                             </button>
+                            <button
+                              v-if="lesson.status === 'archived'"
+                              class="action-pill action-pill--restore"
+                              type="button"
+                              :disabled="mutating"
+                              @click.stop="restoreLesson(module.module_id, lesson)"
+                            >
+                              Вернуть
+                            </button>
                           </div>
                         </div>
                         <aside
@@ -430,6 +359,15 @@
                               Опубликовать урок
                             </button>
                             <button
+                              v-if="selectedLesson.status === 'archived'"
+                              class="ghost-action"
+                              type="button"
+                              :disabled="mutating"
+                              @click="restoreLesson(module.module_id, selectedLesson)"
+                            >
+                              Вернуть урок
+                            </button>
+                            <button
                               class="danger-action"
                               type="button"
                               :disabled="mutating || selectedLesson.status === 'archived'"
@@ -470,64 +408,19 @@
           </div>
         </section>
 
-        <aside class="inspector-panel">
-          <template v-if="selectedCourse && authoring">
-            <section class="inspector-card readiness-card">
-              <h2>Готовность</h2>
-              <div class="readiness-body">
-                <div class="readiness-ring" :style="{ '--progress': `${readinessPercent}%` }">
-                  <span>{{ readinessPercent }}%</span>
-                </div>
-                <p>
-                  {{ readyToPublish ? "Курс готов к публикации" : "Курс почти готов к публикации" }}
-                </p>
-              </div>
-              <ul class="checklist">
-                <li v-for="item in readiness" :key="item.label" :class="{ done: item.done }">
-                  <span>{{ item.done ? "✓" : "!" }}</span>
-                  <div>
-                    <strong>{{ item.label }}</strong>
-                    <small v-if="item.detail">{{ item.detail }}</small>
-                  </div>
-                </li>
-              </ul>
-            </section>
-
-            <section class="inspector-card status-card">
-              <h2>Статус</h2>
-              <span class="state-chip" :data-state="selectedCourse.publish_state">
-                {{ stateLabel(selectedCourse.publish_state) }}
-              </span>
-              <p>
-                draft v{{ draftVersion }} · published {{ publishedVersion }} ·
-                {{ hasUnpublishedChanges ? "есть изменения" : "без изменений" }}
-              </p>
-              <button
-                class="primary-action"
-                type="button"
-                :disabled="mutating || !readyToPublish"
-                @click="publishCourse"
-              >
-                Опубликовать
-              </button>
-              <button class="ghost-action" type="button" disabled>Предпросмотр</button>
-              <button
-                class="danger-action"
-                type="button"
-                :disabled="mutating"
-                @click="archiveCourse"
-              >
-                Архивировать
-              </button>
-              <small>ID курса: {{ selectedCourse.course_id }}</small>
-            </section>
-          </template>
-
-          <section v-else class="inspector-card inspector-hint">
-            <strong>Нет курса</strong>
-            <span>Создайте или выберите курс для проверки готовности.</span>
-          </section>
-        </aside>
+        <CourseInspector
+          :authoring="authoring"
+          :draft-version="draftVersion"
+          :has-unpublished-changes="hasUnpublishedChanges"
+          :mutating="mutating"
+          :published-version="publishedVersion"
+          :readiness="readiness"
+          :readiness-percent="readinessPercent"
+          :ready-to-publish="readyToPublish"
+          :selected-course="selectedCourse"
+          @archive="archiveCourse"
+          @publish="publishCourse"
+        />
       </div>
     </section>
   </main>
@@ -538,15 +431,11 @@ import type { CoursePublishState } from "~/shared/types/course-authoring";
 import { useAuthSession } from "~/features/auth";
 import { useCourseBuilder } from "~/features/course-builder/model/use-course-builder";
 import type { StudioCourseLesson } from "~/features/course-builder/model/types";
+import CourseBuilderToolbar from "~/features/course-builder/ui/CourseBuilderToolbar.vue";
+import CourseInspector from "~/features/course-builder/ui/CourseInspector.vue";
+import CourseListPanel from "~/features/course-builder/ui/CourseListPanel.vue";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
 import type { ThemeMode } from "~/shared/lib/preferences/types";
-
-const filters: Array<{ label: string; value: "all" | "draft" | "published" | "archived" }> = [
-  { label: "Все", value: "all" },
-  { label: "Черновики", value: "draft" },
-  { label: "Опубликовано", value: "published" },
-  { label: "Архив", value: "archived" }
-];
 
 const { user } = useAuthSession();
 const { resolvedTheme, setThemeMode, themeMode } = usePreferences();
@@ -581,6 +470,8 @@ const {
   readyToPublish,
   refreshAuthoring,
   refreshCourses,
+  restoreLesson,
+  restoreModule,
   saveCourse,
   saveLesson,
   saveModule,
@@ -627,21 +518,6 @@ function contentTypeLabel(value: string) {
     video: "Видео"
   };
   return labels[value] ?? value;
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  }).format(new Date(value));
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat("ru-RU", {
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(new Date(value));
 }
 
 function saveSelectedLesson() {
@@ -1586,6 +1462,12 @@ select:focus,
 .lesson-actions .danger-link {
   border-color: rgb(237 138 125 / 0.24);
   color: var(--studio-danger);
+}
+
+.node-actions .action-pill--restore,
+.lesson-actions .action-pill--restore {
+  border-color: rgb(137 220 230 / 0.36);
+  color: var(--studio-accent);
 }
 
 .lesson-list {

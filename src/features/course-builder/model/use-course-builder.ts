@@ -287,6 +287,21 @@ export function useCourseBuilder() {
     );
   }
 
+  async function restoreModule(module: StudioCourseModule) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const payload: UpdateModulePayload = {
+      title: module.title,
+      description: module.description,
+      is_required: module.is_required,
+      status: "draft"
+    };
+    await runMutation(() =>
+      api.updateModule(selectedCourseId.value as string, module.module_id, payload)
+    );
+  }
+
   async function duplicateModule(moduleId: string) {
     if (!selectedCourseId.value) {
       return;
@@ -384,6 +399,24 @@ export function useCourseBuilder() {
     );
   }
 
+  async function restoreLesson(moduleId: string, lesson: StudioCourseLesson) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const payload: UpdateLessonPayload = {
+      title: lesson.title,
+      description: lesson.description,
+      content_type: lesson.content_type,
+      content_ref: lesson.content_ref,
+      duration_minutes: lesson.duration_minutes,
+      is_preview: lesson.is_preview,
+      status: "draft"
+    };
+    await runMutation(() =>
+      api.updateLesson(selectedCourseId.value as string, moduleId, lesson.lesson_id, payload)
+    );
+  }
+
   async function duplicateLesson(moduleId: string, lessonId: string) {
     if (!selectedCourseId.value) {
       return;
@@ -474,6 +507,8 @@ export function useCourseBuilder() {
     readyToPublish,
     refreshAuthoring,
     refreshCourses,
+    restoreLesson,
+    restoreModule,
     saveCourse,
     saveLesson,
     saveModule,
