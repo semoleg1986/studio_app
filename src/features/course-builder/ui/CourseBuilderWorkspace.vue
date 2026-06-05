@@ -1066,7 +1066,7 @@ function setStudioTheme(nextThemeMode: ThemeMode) {
 
 .workspace-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
   align-items: center;
   gap: 1rem;
   padding: 0.8rem 1.05rem;
@@ -1108,6 +1108,8 @@ function setStudioTheme(nextThemeMode: ThemeMode) {
 
 .toolbar-actions {
   flex-shrink: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .history-buttons {
@@ -1215,7 +1217,7 @@ button:disabled {
 .builder-grid {
   display: grid;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) 330px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
 }
 
 .editor-panel,
@@ -1249,6 +1251,14 @@ button:disabled {
 .studio-shell--light .course-item,
 .studio-shell--light .create-course form {
   background: rgb(255 255 255 / 0.8);
+}
+
+.studio-shell--light .module-card {
+  background: rgb(255 255 255 / 0.72);
+}
+
+.studio-shell--light .module-head {
+  background: rgb(246 250 249 / 0.95);
 }
 
 .course-card {
@@ -1288,7 +1298,7 @@ button:disabled {
 .studio-shell--light .input-shell,
 .studio-shell--light .rich-editor,
 .studio-shell--light .duration-field {
-  background: rgb(255 255 255 / 0.72);
+  background: #fffefa;
 }
 
 .input-shell {
@@ -1322,6 +1332,23 @@ select {
   outline: none;
   padding: 0.72rem 0.82rem;
   transition: all 160ms ease;
+}
+
+:global([data-theme="light"]) input,
+:global([data-theme="light"]) textarea,
+:global([data-theme="light"]) select,
+.studio-shell--light input,
+.studio-shell--light textarea,
+.studio-shell--light select {
+  background: #fffefa;
+  color: var(--studio-text);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background: color-mix(in srgb, var(--studio-panel-3) 70%, transparent);
+  color: var(--studio-dim);
 }
 
 .input-shell input,
@@ -1393,7 +1420,7 @@ select:focus,
 }
 
 .authoring-lane--with-lesson {
-  grid-template-columns: minmax(540px, 1fr) minmax(360px, 420px);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .modules-column {
@@ -1414,6 +1441,28 @@ select:focus,
 .module-edit {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   padding: 0 0.65rem 0.65rem;
+}
+
+.inline-create button,
+.module-edit button {
+  min-height: 42px;
+  border: 1px solid var(--studio-line);
+  border-radius: 10px;
+  background: rgb(137 220 230 / 0.12);
+  color: var(--studio-accent);
+  padding: 0 0.86rem;
+}
+
+.inline-create button:hover,
+.module-edit button:hover {
+  border-color: rgb(137 220 230 / 0.42);
+  background: rgb(137 220 230 / 0.18);
+}
+
+.studio-shell--light .inline-create button,
+.studio-shell--light .module-edit button {
+  background: rgb(137 220 230 / 0.2);
+  color: #17606d;
 }
 
 .module-card {
@@ -1547,8 +1596,19 @@ select:focus,
 .lesson-drawer {
   display: grid;
   align-content: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.82rem;
+  margin-top: 1rem;
+  order: -1;
   padding: 1rem;
+}
+
+.lesson-drawer h2,
+.lesson-drawer .field:first-of-type,
+.lesson-drawer .field:nth-of-type(4),
+.lesson-drawer .check-row,
+.lesson-drawer .primary-action {
+  grid-column: 1 / -1;
 }
 
 .lesson-drawer textarea {
@@ -1710,10 +1770,6 @@ select:focus,
 }
 
 @media (max-width: 1380px) {
-  .authoring-lane {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .lesson-drawer {
     position: static;
   }
