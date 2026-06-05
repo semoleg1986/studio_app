@@ -1,0 +1,365 @@
+import { useCourseBuilderClient } from "~/features/course-builder/api/course-builder-client";
+import type {
+  AddLessonPayload,
+  AddModulePayload,
+  StudioCourse,
+  StudioCourseAuthoring,
+  StudioCourseLesson,
+  StudioCourseModule,
+  UpdateCoursePayload,
+  UpdateLessonPayload,
+  UpdateModulePayload
+} from "~/features/course-builder/model/types";
+import { useAuthSession } from "~/features/auth";
+import { ApiRequestError } from "~/shared/api/types";
+
+type CourseFilter = "all" | "draft" | "published" | "archived";
+type SelectedNode =
+  | { type: "course" }
+  | { type: "module"; moduleId: string }
+  | { type: "lesson"; moduleId: string; lessonId: string };
+
+function tomorrowIso() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setMinutes(0, 0, 0);
+  return date.toISOString();
+}
+
+function errorMessage(error: unknown) {
+  if (error instanceof ApiRequestError) {
+    return error.apiError.statusMessage;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Не удалось выполнить действие";
+}
+
+export function useCourseBuilder() {
+  const api = useCourseBuilderClient();
+  const { user } = useAuthSession();
+
+  const courses = ref<StudioCourse[]>([]);
+  const authoring = ref<StudioCourseAuthoring | null>(null);
+  const selectedCourseId = ref<string | null>(null);
+  const selectedNode = ref<SelectedNode>({ type: "course" });
+  const filter = ref<CourseFilter>("all");
+  const search = ref("");
+  const loadingCourses = ref(false);
+  const loadingAuthoring = ref(false);
+  const mutating = ref(false);
+  const lastSavedAt = ref<string | null>(null);
+  const error = ref<string | null>(null);
+
+  const createCourseForm = reactive({
+    title: "",
+    description: "",
+    level: "beginner",
+    price: 0
+  });
+
+  const courseForm = reactive({
+    title: "",
+    description: "",
+    level: "beginner",
+    price: 0
+  });
+
+  const moduleForm = reactive({
+    title: "",
+    description: ""
+  });
+
+  const lessonForm = reactive({
+    title: "",
+    description: "",
+    content_type: "video",
+    duration_minutes: 15,
+    is_preview: false
+  });
+
+  const total = computed(() => courses.value.length);
+  const selectedCourse = computed(() => authoring.value?.course ?? null);
+  const modules = computed(() => authoring.value?.modules ?? []);
+  const selectedModule = computed<StudioCourseModule | null>(() => {
+    if (selectedNode.value.type === "module" || selectedNode.value.type === "lesson") {
+      return modules.value.find((item) => item.module_id === selectedNode.value.moduleId) ?? null;
+    }
+    return null;
+  });
+  const selectedLesson = computed<StudioCourseLesson | null>(() => {
+    if (selectedNode.value.type !== "lesson") {
+      return null;
+    }
+    return (
+      selectedModule.value?.lessons.find(
+        (item) => item.lesson_id === selectedNode.value.lessonId
+      ) ?? null
+    );
+  });
+
+  const readiness = computed(() => {
+    const course = selectedCourse.value;
+    return [
+      { label: "Название", done: Boolean(course?.title?.trim()) },
+      { label: "Описание", done: Boolean(course?.description?.trim()) },
+      { label: "Минимум 1 модуль", done: modules.value.length > 0 },
+      {
+        label: "Минимум 1 урок",
+        done: modules.value.some((module) => module.lessons.length > 0)
+      },
+      { label: "Цена проверена", done: course !== null && course.price >= 0 }
+    ];
+  });
+  const readyToPublish = computed(() => readiness.value.every((item) => item.done));
+
+  watch(authoring, (value) => {
+    if (!value) {
+      courseForm.title = "";
+      courseForm.description = "";
+      courseForm.level = "beginner";
+      courseForm.price = 0;
+      return;
+    }
+
+    courseForm.title = value.course.title;
+    courseForm.description = value.course.description ?? "";
+    courseForm.level = value.course.level;
+    courseForm.price = value.course.price;
+  });
+
+  async function refreshCourses() {
+    loadingCourses.value = true;
+    error.value = null;
+    try {
+      const response = await api.listCourses({
+        limit: 100,
+        offset: 0,
+        publish_state: filter.value === "all" ? undefined : filter.value,
+        q: search.value.trim() || undefined
+      });
+      courses.value = response.items;
+
+      if (!selectedCourseId.value && response.items[0]) {
+        await selectCourse(response.items[0].course_id);
+      }
+      if (
+        selectedCourseId.value &&
+        !response.items.some((course) => course.course_id === selectedCourseId.value)
+      ) {
+        authoring.value = null;
+        selectedCourseId.value = null;
+      }
+    } catch (caught) {
+      error.value = errorMessage(caught);
+    } finally {
+      loadingCourses.value = false;
+    }
+  }
+
+  async function refreshAuthoring() {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    loadingAuthoring.value = true;
+    error.value = null;
+    try {
+      authoring.value = await api.getAuthoring(selectedCourseId.value);
+    } catch (caught) {
+      error.value = errorMessage(caught);
+    } finally {
+      loadingAuthoring.value = false;
+    }
+  }
+
+  async function selectCourse(courseId: string) {
+    selectedCourseId.value = courseId;
+    selectedNode.value = { type: "course" };
+    await refreshAuthoring();
+  }
+
+  async function runMutation(action: () => Promise<unknown>) {
+    mutating.value = true;
+    error.value = null;
+    try {
+      await action();
+      lastSavedAt.value = new Date().toISOString();
+      await refreshCourses();
+      await refreshAuthoring();
+    } catch (caught) {
+      error.value = errorMessage(caught);
+    } finally {
+      mutating.value = false;
+    }
+  }
+
+  async function createCourse() {
+    const title = createCourseForm.title.trim();
+    if (!title || !user.value) {
+      error.value = "Заполните название курса";
+      return;
+    }
+
+    await runMutation(async () => {
+      const created = await api.createCourse({
+        title,
+        description: createCourseForm.description.trim() || null,
+        teacher_id: user.value?.user_id ?? "",
+        teacher_display_name: user.value?.email ?? null,
+        starts_at: tomorrowIso(),
+        duration_days: 30,
+        price: Number(createCourseForm.price) || 0,
+        currency: "USD",
+        language: "ru",
+        level: createCourseForm.level,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+      });
+      selectedCourseId.value = created.course_id;
+      selectedNode.value = { type: "course" };
+      createCourseForm.title = "";
+      createCourseForm.description = "";
+      createCourseForm.price = 0;
+    });
+  }
+
+  async function saveCourse() {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const payload: UpdateCoursePayload = {
+      title: courseForm.title.trim(),
+      description: courseForm.description.trim() || null,
+      level: courseForm.level,
+      price: Number(courseForm.price) || 0,
+      currency: "USD",
+      language: "ru"
+    };
+    await runMutation(() => api.updateCourse(selectedCourseId.value as string, payload));
+  }
+
+  async function addModule() {
+    if (!selectedCourseId.value || !moduleForm.title.trim()) {
+      error.value = "Введите название модуля";
+      return;
+    }
+    const payload: AddModulePayload = {
+      title: moduleForm.title.trim(),
+      description: moduleForm.description.trim() || null,
+      is_required: true
+    };
+    await runMutation(() => api.addModule(selectedCourseId.value as string, payload));
+    moduleForm.title = "";
+    moduleForm.description = "";
+  }
+
+  async function saveModule(module: StudioCourseModule) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const payload: UpdateModulePayload = {
+      title: module.title,
+      description: module.description,
+      is_required: module.is_required,
+      status: module.status
+    };
+    await runMutation(() =>
+      api.updateModule(selectedCourseId.value as string, module.module_id, payload)
+    );
+  }
+
+  async function addLesson(moduleId: string) {
+    if (!selectedCourseId.value || !lessonForm.title.trim()) {
+      error.value = "Введите название урока";
+      return;
+    }
+    const payload: AddLessonPayload = {
+      title: lessonForm.title.trim(),
+      description: lessonForm.description.trim() || null,
+      content_type: lessonForm.content_type,
+      duration_minutes: Number(lessonForm.duration_minutes) || null,
+      is_preview: lessonForm.is_preview
+    };
+    await runMutation(() => api.addLesson(selectedCourseId.value as string, moduleId, payload));
+    lessonForm.title = "";
+    lessonForm.description = "";
+    lessonForm.duration_minutes = 15;
+    lessonForm.is_preview = false;
+  }
+
+  async function saveLesson(moduleId: string, lesson: StudioCourseLesson) {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const payload: UpdateLessonPayload = {
+      title: lesson.title,
+      description: lesson.description,
+      content_type: lesson.content_type,
+      content_ref: lesson.content_ref,
+      duration_minutes: lesson.duration_minutes,
+      is_preview: lesson.is_preview,
+      status: lesson.status
+    };
+    await runMutation(() =>
+      api.updateLesson(selectedCourseId.value as string, moduleId, lesson.lesson_id, payload)
+    );
+  }
+
+  async function publishCourse() {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    await runMutation(() => api.publishCourse(selectedCourseId.value as string));
+  }
+
+  async function archiveCourse() {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    await runMutation(() => api.archiveCourse(selectedCourseId.value as string));
+  }
+
+  watch([filter, search], () => {
+    void refreshCourses();
+  });
+
+  onMounted(() => {
+    void refreshCourses();
+  });
+
+  return {
+    addLesson,
+    addModule,
+    archiveCourse,
+    authoring,
+    courseForm,
+    courses,
+    createCourse,
+    createCourseForm,
+    error,
+    filter,
+    lastSavedAt,
+    lessonForm,
+    loadingAuthoring,
+    loadingCourses,
+    moduleForm,
+    modules,
+    mutating,
+    publishCourse,
+    readiness,
+    readyToPublish,
+    refreshAuthoring,
+    refreshCourses,
+    saveCourse,
+    saveLesson,
+    saveModule,
+    search,
+    selectCourse,
+    selectedCourse,
+    selectedCourseId,
+    selectedLesson,
+    selectedModule,
+    selectedNode,
+    total
+  };
+}

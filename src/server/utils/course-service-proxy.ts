@@ -1,10 +1,11 @@
-import { getRequestHeader, setHeader, setResponseStatus } from "h3";
+import { getRequestHeader, readBody, setHeader, setResponseStatus } from "h3";
 import type { H3Event } from "h3";
 
 import { getAccessToken } from "~/server/utils/auth-session";
 import { exchangeRefreshToken } from "~/server/utils/auth-proxy";
 
 interface CourseServiceProxyOptions {
+  body?: unknown;
   method?: string;
   query?: Record<string, unknown>;
 }
@@ -113,13 +114,18 @@ async function fetchCourseService(
   url: string,
   event: H3Event,
   accessToken: string,
-  method: string
+  method: string,
+  body?: unknown
 ) {
   const headers = new Headers({ Accept: "application/json" });
   headers.set("Authorization", `Bearer ${accessToken}`);
+  if (body !== undefined) {
+    headers.set("Content-Type", "application/json");
+  }
   forwardTracingHeaders(event, headers);
 
   return await fetch(url, {
+    body: body === undefined ? undefined : JSON.stringify(body),
     headers,
     method
   });
@@ -139,14 +145,15 @@ export async function proxyCourseServiceJson<TResponse>(
 
   const url = buildCourseServiceUrl(courseServiceBaseUrl(event), path, options.query);
   const method = options.method ?? "GET";
-  let response = await fetchCourseService(url, event, accessToken, method);
+  const body = options.body ?? (method === "GET" ? undefined : await readBody(event));
+  let response = await fetchCourseService(url, event, accessToken, method, body);
 
   if (response.status === 401) {
     const refreshed = await exchangeRefreshToken(event);
 
     if (refreshed) {
       accessToken = refreshed.access_token;
-      response = await fetchCourseService(url, event, accessToken, method);
+      response = await fetchCourseService(url, event, accessToken, method, body);
     }
   }
 
