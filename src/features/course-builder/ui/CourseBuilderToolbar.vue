@@ -106,7 +106,7 @@ function formatTime(value: string) {
 .menu-button,
 .activity-button {
   border: 1px solid var(--studio-line);
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-muted);
 }
 
@@ -145,7 +145,7 @@ function formatTime(value: string) {
 .history-buttons button {
   border: 0;
   border-radius: 0;
-  background: transparent;
+  background: var(--studio-control-bg);
 }
 
 .history-buttons button:last-child {

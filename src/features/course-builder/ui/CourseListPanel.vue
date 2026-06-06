@@ -231,7 +231,7 @@ function updateCreateCourseForm<K extends keyof CreateCourseForm>(
   height: 40px;
   border: 1px solid var(--studio-line);
   border-radius: 10px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   padding: 0 0.48rem 0 0.72rem;
 }
 
@@ -271,7 +271,7 @@ function updateCreateCourseForm<K extends keyof CreateCourseForm>(
 .state-chip {
   border: 1px solid var(--studio-line);
   border-radius: 999px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-muted);
   font-size: 0.78rem;
   font-weight: 950;
@@ -408,10 +408,11 @@ function updateCreateCourseForm<K extends keyof CreateCourseForm>(
 input,
 select,
 textarea {
+  box-sizing: border-box;
   width: 100%;
   border: 1px solid var(--studio-line);
   border-radius: 10px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-text);
   font: inherit;
   font-weight: 850;

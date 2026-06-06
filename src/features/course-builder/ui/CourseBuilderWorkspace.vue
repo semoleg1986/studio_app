@@ -221,6 +221,10 @@ function patchSelectedLesson(
   --studio-success: #7bd99b;
   --studio-warning: #e4b966;
   --studio-danger: #ed8a7d;
+  --studio-control-bg: rgb(0 0 0 / 0.12);
+  --studio-control-bg-strong: rgb(0 0 0 / 0.18);
+  --studio-button-bg: rgb(255 255 255 / 0.9);
+  --studio-button-text: #111c21;
   --studio-radius: 16px;
   --studio-shadow: 0 26px 90px rgb(0 0 0 / 0.42);
 
@@ -256,6 +260,10 @@ function patchSelectedLesson(
   --studio-success: #238956;
   --studio-warning: #9a6b18;
   --studio-danger: #b74a3f;
+  --studio-control-bg: #fffefa;
+  --studio-control-bg-strong: #f6fbfb;
+  --studio-button-bg: rgb(137 220 230 / 0.22);
+  --studio-button-text: #17606d;
   --studio-shadow: 0 26px 90px rgb(24 50 58 / 0.13);
 }
 

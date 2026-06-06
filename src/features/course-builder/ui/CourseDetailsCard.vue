@@ -114,7 +114,7 @@ function updateCourseForm<K extends keyof CourseForm>(key: K, value: CourseForm[
 .rich-editor {
   border: 1px solid var(--studio-line);
   border-radius: 12px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
 }
 
 .input-shell {
@@ -139,10 +139,11 @@ function updateCourseForm<K extends keyof CourseForm>(key: K, value: CourseForm[
 input,
 select,
 textarea {
+  box-sizing: border-box;
   width: 100%;
   border: 1px solid var(--studio-line);
   border-radius: 10px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-text);
   font: inherit;
   font-weight: 850;

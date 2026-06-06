@@ -121,8 +121,11 @@ function updateLesson<K extends keyof LessonPatch>(key: K, value: NonNullable<Le
 
 <style scoped>
 .lesson-drawer {
+  box-sizing: border-box;
   display: grid;
   gap: 0.8rem;
+  width: 100%;
+  max-width: 100%;
   padding: 1rem;
   border: 1px solid var(--studio-line);
   border-radius: 16px;
@@ -130,7 +133,7 @@ function updateLesson<K extends keyof LessonPatch>(key: K, value: NonNullable<Le
 }
 
 .lesson-drawer--inline {
-  margin: 0.48rem 0.65rem 0.9rem 3.2rem;
+  margin: 0.48rem 0.65rem 0.9rem;
   box-shadow: 0 18px 48px rgb(0 0 0 / 0.18);
 }
 
@@ -157,7 +160,7 @@ function updateLesson<K extends keyof LessonPatch>(key: K, value: NonNullable<Le
 .duration-field {
   border: 1px solid var(--studio-line);
   border-radius: 12px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
 }
 
 .input-shell {
@@ -224,7 +227,7 @@ function updateLesson<K extends keyof LessonPatch>(key: K, value: NonNullable<Le
 .ghost-action,
 .danger-action {
   border: 1px solid var(--studio-line);
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-muted);
 }
 
@@ -236,10 +239,11 @@ function updateLesson<K extends keyof LessonPatch>(key: K, value: NonNullable<Le
 input,
 select,
 textarea {
+  box-sizing: border-box;
   width: 100%;
   border: 1px solid var(--studio-line);
   border-radius: 10px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-text);
   font: inherit;
   font-weight: 850;
@@ -259,9 +263,28 @@ textarea {
   resize: vertical;
 }
 
+button {
+  cursor: pointer;
+  font: inherit;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+@media (min-width: 1280px) {
+  .lesson-drawer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lesson-drawer h2,
+  .lesson-drawer .field:first-of-type,
+  .lesson-drawer .field:nth-of-type(4),
+  .check-row,
+  .lesson-editor-actions {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 760px) {

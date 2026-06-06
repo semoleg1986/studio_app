@@ -136,7 +136,7 @@ function stateLabel(state: CoursePublishState) {
   place-items: center;
   border-radius: 999px;
   background:
-    radial-gradient(circle, var(--studio-panel) 58%, transparent 60%),
+    radial-gradient(circle, var(--studio-control-bg-strong) 58%, transparent 60%),
     conic-gradient(var(--studio-accent) var(--progress), rgb(255 255 255 / 0.08) 0);
   font-weight: 950;
 }
@@ -193,7 +193,7 @@ function stateLabel(state: CoursePublishState) {
   width: fit-content;
   border: 1px solid var(--studio-line);
   border-radius: 999px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-muted);
   font-size: 0.78rem;
   font-weight: 950;
@@ -226,7 +226,7 @@ function stateLabel(state: CoursePublishState) {
 .ghost-action,
 .danger-action {
   border: 1px solid var(--studio-line);
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-muted);
 }
 
@@ -239,7 +239,7 @@ function stateLabel(state: CoursePublishState) {
 .ghost-action:disabled,
 .danger-action:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.42;
 }
 
 .inspector-hint {

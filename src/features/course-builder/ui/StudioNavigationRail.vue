@@ -171,7 +171,7 @@ function setTheme(theme: ThemeMode) {
 .theme-switcher button {
   border: 1px solid var(--studio-line);
   border-radius: 10px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-text);
   cursor: pointer;
   font: inherit;

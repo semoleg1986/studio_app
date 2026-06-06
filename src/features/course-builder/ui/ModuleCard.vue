@@ -279,7 +279,7 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
 .node-actions button,
 .state-chip {
   border: 1px solid var(--studio-line);
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-muted);
 }
 
@@ -340,8 +340,8 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
 .lesson-create button {
   border: 1px solid var(--studio-line);
   border-radius: 10px;
-  background: rgb(255 255 255 / 0.9);
-  color: #111c21;
+  background: var(--studio-button-bg);
+  color: var(--studio-button-text);
   cursor: pointer;
   font: inherit;
   font-weight: 950;
@@ -363,10 +363,11 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
 }
 
 input {
+  box-sizing: border-box;
   width: 100%;
   border: 1px solid var(--studio-line);
   border-radius: 10px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--studio-control-bg);
   color: var(--studio-text);
   font: inherit;
   font-weight: 850;
