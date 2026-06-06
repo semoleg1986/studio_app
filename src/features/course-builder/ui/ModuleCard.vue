@@ -1,88 +1,22 @@
 <template>
   <article class="module-card">
-    <header class="module-head">
-      <button
-        type="button"
-        class="node-button"
-        @click="$emit('update:selectedNode', { type: 'module', moduleId: module.module_id })"
-      >
-        <span class="drag-handle">⠿</span>
-        <strong>{{ module.position }}. {{ module.title }}</strong>
-        <small>{{ module.lessons.length }} урока</small>
-        <span class="collapse-mark">⌃</span>
-      </button>
-      <div class="node-actions">
-        <span class="state-chip node-state" :data-state="module.status">
-          {{ stateLabel(module.status) }}
-        </span>
-        <button
-          v-if="module.status !== 'published' && module.status !== 'archived'"
-          class="action-pill"
-          type="button"
-          :disabled="mutating"
-          @click.stop="$emit('publish-module', module)"
-        >
-          Опубликовать
-        </button>
-        <button
-          v-if="module.status === 'archived'"
-          class="action-pill action-pill--restore"
-          type="button"
-          :disabled="mutating"
-          @click.stop="$emit('restore-module', module)"
-        >
-          Вернуть
-        </button>
-        <button
-          type="button"
-          :disabled="mutating"
-          @click.stop="$emit('move-module', module.module_id, -1)"
-        >
-          ↑
-        </button>
-        <button
-          type="button"
-          :disabled="mutating"
-          @click.stop="$emit('move-module', module.module_id, 1)"
-        >
-          ↓
-        </button>
-        <button
-          type="button"
-          :disabled="mutating"
-          @click.stop="$emit('duplicate-module', module.module_id)"
-        >
-          ⧉
-        </button>
-        <button
-          class="danger-link action-pill"
-          type="button"
-          :disabled="mutating || module.status === 'archived'"
-          @click.stop="$emit('archive-module', module.module_id)"
-        >
-          В архив
-        </button>
-      </div>
-    </header>
+    <ModuleHeader
+      :module="module"
+      :mutating="mutating"
+      @archive-module="$emit('archive-module', $event)"
+      @duplicate-module="$emit('duplicate-module', $event)"
+      @move-module="(moduleId, direction) => $emit('move-module', moduleId, direction)"
+      @publish-module="$emit('publish-module', $event)"
+      @restore-module="$emit('restore-module', $event)"
+      @update:selected-node="$emit('update:selectedNode', $event)"
+    />
 
-    <div class="module-edit">
-      <input
-        :value="module.title"
-        @input="updateModule({ title: ($event.target as HTMLInputElement).value })"
-      />
-      <input
-        :value="module.description ?? ''"
-        placeholder="Описание модуля"
-        @input="
-          updateModule({
-            description: ($event.target as HTMLInputElement).value || null
-          })
-        "
-      />
-      <button type="button" :disabled="mutating" @click="$emit('save-module', module)">
-        Сохранить
-      </button>
-    </div>
+    <ModuleEditForm
+      :module="module"
+      :mutating="mutating"
+      @save="$emit('save-module', module)"
+      @update:module="updateModule"
+    />
 
     <ul class="lesson-list">
       <li v-for="lesson in module.lessons" :key="lesson.lesson_id">
@@ -122,28 +56,12 @@
       </li>
     </ul>
 
-    <form
-      class="inline-create lesson-create"
-      @submit.prevent="$emit('add-lesson', module.module_id)"
-    >
-      <input
-        :value="lessonForm.title"
-        placeholder="Новый урок"
-        @input="updateLessonForm('title', ($event.target as HTMLInputElement).value)"
-      />
-      <input
-        :value="lessonForm.duration_minutes"
-        min="1"
-        type="number"
-        @input="
-          updateLessonForm(
-            'duration_minutes',
-            Number(($event.target as HTMLInputElement).value) || 15
-          )
-        "
-      />
-      <button type="submit" :disabled="mutating">+ Урок</button>
-    </form>
+    <LessonCreateForm
+      :lesson-form="lessonForm"
+      :mutating="mutating"
+      @add-lesson="$emit('add-lesson', module.module_id)"
+      @update:lesson-form="$emit('update:lessonForm', $event)"
+    />
   </article>
 </template>
 
@@ -153,9 +71,11 @@ import type {
   StudioCourseLesson,
   StudioCourseModule
 } from "~/features/course-builder/model/types";
+import LessonCreateForm from "~/features/course-builder/ui/LessonCreateForm.vue";
 import LessonInlineEditor from "~/features/course-builder/ui/LessonInlineEditor.vue";
 import LessonRow from "~/features/course-builder/ui/LessonRow.vue";
-import type { CoursePublishState } from "~/shared/types/course-authoring";
+import ModuleEditForm from "~/features/course-builder/ui/ModuleEditForm.vue";
+import ModuleHeader from "~/features/course-builder/ui/ModuleHeader.vue";
 
 type LessonForm = {
   content_type: string;
@@ -201,21 +121,8 @@ const props = defineProps<{
   selectedNode: CourseBuilderSelectedNode;
 }>();
 
-function stateLabel(state: CoursePublishState) {
-  const labels: Record<string, string> = {
-    archived: "Архив",
-    draft: "Черновик",
-    published: "Опубликовано"
-  };
-  return labels[state] ?? state;
-}
-
 function updateModule(patch: ModulePatch) {
   emit("update:module", props.module, patch);
-}
-
-function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[K]) {
-  emit("update:lessonForm", { [key]: value });
 }
 </script>
 
@@ -227,167 +134,11 @@ function updateLessonForm<K extends keyof LessonForm>(key: K, value: LessonForm[
   background: rgb(255 255 255 / 0.035);
 }
 
-.module-head,
-.node-actions {
-  display: flex;
-  align-items: center;
-}
-
-.module-head {
-  gap: 0.6rem;
-  padding: 0.52rem 0.65rem;
-  background: color-mix(in srgb, var(--studio-panel-3) 50%, transparent);
-}
-
-.node-button {
-  display: grid;
-  min-width: 0;
-  flex: 1;
-  grid-template-columns: 26px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 0.65rem;
-  border: 0;
-  background: transparent;
-  color: var(--studio-text);
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-}
-
-.node-button strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.node-button small {
-  color: var(--studio-muted);
-}
-
-.drag-handle,
-.collapse-mark {
-  color: var(--studio-dim);
-}
-
-.node-actions {
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.32rem;
-}
-
-.node-actions button,
-.state-chip {
-  border: 1px solid var(--studio-line);
-  background: var(--studio-control-bg);
-  color: var(--studio-muted);
-}
-
-.node-actions button {
-  display: grid;
-  min-width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 8px;
-  padding: 0 0.42rem;
-}
-
-.node-actions .action-pill {
-  min-width: auto;
-  padding-inline: 0.62rem;
-  white-space: nowrap;
-}
-
-.node-actions .danger-link {
-  border-color: rgb(237 138 125 / 0.24);
-  color: var(--studio-danger);
-}
-
-.node-actions .action-pill--restore {
-  border-color: rgb(137 220 230 / 0.36);
-  color: var(--studio-accent);
-}
-
-.state-chip {
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 950;
-  padding: 0.32rem 0.64rem;
-}
-
-.state-chip[data-state="published"] {
-  color: var(--studio-success);
-}
-
-.state-chip[data-state="archived"] {
-  color: var(--studio-dim);
-}
-
-.node-state {
-  white-space: nowrap;
-}
-
-.module-edit,
-.lesson-create {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 0.6rem;
-  padding: 0.65rem;
-}
-
-.inline-create button,
-.module-edit button,
-.lesson-create button {
-  border: 1px solid var(--studio-line);
-  border-radius: 10px;
-  background: var(--studio-button-bg);
-  color: var(--studio-button-text);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 950;
-  padding: 0 0.9rem;
-}
-
-.inline-create {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.6rem;
-}
-
 .lesson-list {
   display: grid;
   gap: 0.18rem;
   margin: 0;
   padding: 0 0.65rem 0.65rem;
   list-style: none;
-}
-
-input {
-  box-sizing: border-box;
-  width: 100%;
-  border: 1px solid var(--studio-line);
-  border-radius: 10px;
-  background: var(--studio-control-bg);
-  color: var(--studio-text);
-  font: inherit;
-  font-weight: 850;
-  outline: none;
-  padding: 0.78rem 0.9rem;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-@media (max-width: 760px) {
-  .module-edit,
-  .lesson-create {
-    grid-template-columns: 1fr;
-  }
-
-  .node-button {
-    grid-template-columns: 24px minmax(0, 1fr);
-  }
 }
 </style>
