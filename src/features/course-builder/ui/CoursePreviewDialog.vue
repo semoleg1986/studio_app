@@ -24,7 +24,7 @@
       <div class="preview-meta">
         <span>{{ levelLabel(authoring.course.level) }}</span>
         <span>{{ visibleLessonsCount }} уроков</span>
-        <span>{{ formatMoney(authoring.course.price, authoring.course.currency) }}</span>
+        <span>Цена настраивается в offer</span>
       </div>
 
       <div class="preview-body">
@@ -104,14 +104,6 @@ function contentTypeLabel(value: string) {
     video: "Видео"
   };
   return labels[value] ?? value;
-}
-
-function formatMoney(amount: number, currency: string) {
-  return new Intl.NumberFormat("ru-RU", {
-    currency,
-    maximumFractionDigits: 0,
-    style: "currency"
-  }).format(amount);
 }
 </script>
 

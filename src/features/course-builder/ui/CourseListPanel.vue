@@ -53,28 +53,14 @@
               updateCreateCourseForm('description', ($event.target as HTMLTextAreaElement).value)
             "
           />
-          <div class="form-row">
-            <select
-              :value="createCourseForm.level"
-              @change="updateCreateCourseForm('level', ($event.target as HTMLSelectElement).value)"
-            >
-              <option value="beginner">Начальный</option>
-              <option value="intermediate">Средний</option>
-              <option value="advanced">Продвинутый</option>
-            </select>
-            <input
-              :value="createCourseForm.price"
-              min="0"
-              step="1"
-              type="number"
-              @input="
-                updateCreateCourseForm(
-                  'price',
-                  Number(($event.target as HTMLInputElement).value) || 0
-                )
-              "
-            />
-          </div>
+          <select
+            :value="createCourseForm.level"
+            @change="updateCreateCourseForm('level', ($event.target as HTMLSelectElement).value)"
+          >
+            <option value="beginner">Начальный</option>
+            <option value="intermediate">Средний</option>
+            <option value="advanced">Продвинутый</option>
+          </select>
           <button class="primary-action" type="submit" :disabled="mutating">Создать</button>
         </form>
       </details>
@@ -116,7 +102,6 @@ type CourseFilter = "all" | "draft" | "published" | "archived";
 type CreateCourseForm = {
   description: string;
   level: string;
-  price: number;
   title: string;
 };
 

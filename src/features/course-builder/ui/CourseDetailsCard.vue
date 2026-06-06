@@ -56,7 +56,6 @@
 type CourseForm = {
   description: string;
   level: string;
-  price: number;
   title: string;
 };
 

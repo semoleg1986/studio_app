@@ -25,8 +25,6 @@ export interface CreateCoursePayload {
   teacher_display_name?: string | null;
   starts_at: string;
   duration_days: number;
-  price: number;
-  currency: string;
   language: string;
   level: string;
   timezone: string;
@@ -35,8 +33,6 @@ export interface CreateCoursePayload {
 export type UpdateCoursePayload = Partial<{
   title: string;
   description: string | null;
-  price: number;
-  currency: string;
   level: string;
   language: string;
   timezone: string;

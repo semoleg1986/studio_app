@@ -19,7 +19,6 @@ type CourseFilter = "all" | "draft" | "published" | "archived";
 type CourseFormState = {
   description: string;
   level: string;
-  price: number;
   title: string;
 };
 
@@ -85,15 +84,13 @@ export function useCourseBuilder() {
   const createCourseForm = reactive({
     title: "",
     description: "",
-    level: "beginner",
-    price: 0
+    level: "beginner"
   });
 
   const courseForm = reactive({
     title: "",
     description: "",
-    level: "beginner",
-    price: 0
+    level: "beginner"
   });
 
   const moduleForm = reactive({
@@ -148,14 +145,12 @@ export function useCourseBuilder() {
       courseForm.title = "";
       courseForm.description = "";
       courseForm.level = "beginner";
-      courseForm.price = 0;
       return;
     }
 
     courseForm.title = value.course.title;
     courseForm.description = value.course.description ?? "";
     courseForm.level = value.course.level;
-    courseForm.price = value.course.price;
   });
 
   function cloneState<T>(value: T): T {
@@ -303,8 +298,6 @@ export function useCourseBuilder() {
         teacher_display_name: user.value?.email ?? null,
         starts_at: tomorrowIso(),
         duration_days: 30,
-        price: Number(createCourseForm.price) || 0,
-        currency: "USD",
         language: "ru",
         level: createCourseForm.level,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
@@ -313,7 +306,6 @@ export function useCourseBuilder() {
       selectedNode.value = { type: "course" };
       createCourseForm.title = "";
       createCourseForm.description = "";
-      createCourseForm.price = 0;
     });
   }
 
@@ -325,8 +317,6 @@ export function useCourseBuilder() {
       title: courseForm.title.trim(),
       description: courseForm.description.trim() || null,
       level: courseForm.level,
-      price: Number(courseForm.price) || 0,
-      currency: "USD",
       language: "ru"
     };
     await runMutation(() => api.updateCourse(selectedCourseId.value as string, payload));
