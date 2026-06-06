@@ -23,12 +23,16 @@
 
     <section class="workspace-main">
       <CourseBuilderToolbar
+        :can-redo="canRedo"
+        :can-undo="canUndo"
         :last-saved-at="lastSavedAt"
         :mutating="mutating"
         :ready-to-publish="readyToPublish"
         :selected-course="selectedCourse"
         @preview="previewOpen = true"
         @publish="publishCourse"
+        @redo="redo"
+        @undo="undo"
       />
 
       <p v-if="error" class="problem">
@@ -49,7 +53,7 @@
             <CourseDetailsCard
               :course-form="courseForm"
               @save="saveCourse"
-              @update:course-form="Object.assign(courseForm, $event)"
+              @update:course-form="patchCourseForm"
             />
 
             <CourseStructureEditor
@@ -131,6 +135,8 @@ const {
   archiveLesson,
   archiveModule,
   authoring,
+  canRedo,
+  canUndo,
   courseForm,
   courses,
   createCourse,
@@ -150,10 +156,12 @@ const {
   publishCourse,
   publishLesson,
   publishModule,
+  recordHistory,
   readiness,
   readyToPublish,
   refreshAuthoring,
   refreshCourses,
+  redo,
   restoreLesson,
   restoreModule,
   saveCourse,
@@ -167,7 +175,8 @@ const {
   selectedCourseId,
   selectedLesson,
   selectedNode,
-  total
+  total,
+  undo
 } = useCourseBuilder();
 
 const readinessPercent = computed(() => {
@@ -188,10 +197,16 @@ function saveSelectedLesson() {
   void saveLesson(selectedNode.value.moduleId, selectedLesson.value as StudioCourseLesson);
 }
 
+function patchCourseForm(patch: Partial<typeof courseForm>) {
+  recordHistory();
+  Object.assign(courseForm, patch);
+}
+
 function patchModule(
   module: StudioCourseModule,
   patch: Partial<Pick<StudioCourseModule, "description" | "title">>
 ) {
+  recordHistory();
   Object.assign(module, patch);
 }
 
@@ -204,6 +219,7 @@ function patchSelectedLesson(
   >
 ) {
   if (selectedLesson.value) {
+    recordHistory();
     Object.assign(selectedLesson.value, patch);
   }
 }

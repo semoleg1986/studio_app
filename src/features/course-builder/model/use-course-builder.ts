@@ -16,6 +16,37 @@ import { ApiRequestError } from "~/shared/api/types";
 
 type CourseFilter = "all" | "draft" | "published" | "archived";
 
+type CourseFormState = {
+  description: string;
+  level: string;
+  price: number;
+  title: string;
+};
+
+type ModuleFormState = {
+  description: string;
+  title: string;
+};
+
+type LessonFormState = {
+  content_type: string;
+  description: string;
+  duration_minutes: number;
+  is_preview: boolean;
+  title: string;
+};
+
+type BuilderSnapshot = {
+  authoring: StudioCourseAuthoring | null;
+  courseForm: CourseFormState;
+  lessonForm: LessonFormState;
+  moduleForm: ModuleFormState;
+  selectedCourseId: string | null;
+  selectedNode: CourseBuilderSelectedNode;
+};
+
+const MAX_HISTORY_ENTRIES = 60;
+
 function tomorrowIso() {
   const date = new Date();
   date.setDate(date.getDate() + 1);
@@ -48,6 +79,8 @@ export function useCourseBuilder() {
   const mutating = ref(false);
   const lastSavedAt = ref<string | null>(null);
   const error = ref<string | null>(null);
+  const undoStack = ref<BuilderSnapshot[]>([]);
+  const redoStack = ref<BuilderSnapshot[]>([]);
 
   const createCourseForm = reactive({
     title: "",
@@ -107,6 +140,8 @@ export function useCourseBuilder() {
   });
   const readyToPublish = computed(() => authoring.value?.readiness.ready_to_publish ?? false);
   const hasUnpublishedChanges = computed(() => authoring.value?.has_unpublished_changes ?? false);
+  const canUndo = computed(() => undoStack.value.length > 0);
+  const canRedo = computed(() => redoStack.value.length > 0);
 
   watch(authoring, (value) => {
     if (!value) {
@@ -122,6 +157,67 @@ export function useCourseBuilder() {
     courseForm.level = value.course.level;
     courseForm.price = value.course.price;
   });
+
+  function cloneState<T>(value: T): T {
+    return JSON.parse(JSON.stringify(value)) as T;
+  }
+
+  function createSnapshot(): BuilderSnapshot {
+    return {
+      authoring: cloneState(authoring.value),
+      courseForm: cloneState(courseForm),
+      lessonForm: cloneState(lessonForm),
+      moduleForm: cloneState(moduleForm),
+      selectedCourseId: selectedCourseId.value,
+      selectedNode: cloneState(selectedNode.value)
+    };
+  }
+
+  function applySnapshot(snapshot: BuilderSnapshot) {
+    authoring.value = cloneState(snapshot.authoring);
+    Object.assign(courseForm, cloneState(snapshot.courseForm));
+    Object.assign(moduleForm, cloneState(snapshot.moduleForm));
+    Object.assign(lessonForm, cloneState(snapshot.lessonForm));
+    selectedCourseId.value = snapshot.selectedCourseId;
+    selectedNode.value = cloneState(snapshot.selectedNode);
+  }
+
+  function resetHistory() {
+    undoStack.value = [];
+    redoStack.value = [];
+  }
+
+  function recordHistory() {
+    const snapshot = createSnapshot();
+    const previous = undoStack.value.at(-1);
+    if (previous && JSON.stringify(previous) === JSON.stringify(snapshot)) {
+      return;
+    }
+
+    undoStack.value.push(snapshot);
+    if (undoStack.value.length > MAX_HISTORY_ENTRIES) {
+      undoStack.value.shift();
+    }
+    redoStack.value = [];
+  }
+
+  function undo() {
+    const previous = undoStack.value.pop();
+    if (!previous) {
+      return;
+    }
+    redoStack.value.push(createSnapshot());
+    applySnapshot(previous);
+  }
+
+  function redo() {
+    const next = redoStack.value.pop();
+    if (!next) {
+      return;
+    }
+    undoStack.value.push(createSnapshot());
+    applySnapshot(next);
+  }
 
   async function refreshCourses() {
     loadingCourses.value = true;
@@ -144,6 +240,7 @@ export function useCourseBuilder() {
       ) {
         authoring.value = null;
         selectedCourseId.value = null;
+        resetHistory();
       }
     } catch (caught) {
       error.value = errorMessage(caught);
@@ -160,6 +257,7 @@ export function useCourseBuilder() {
     error.value = null;
     try {
       authoring.value = await api.getAuthoring(selectedCourseId.value);
+      resetHistory();
     } catch (caught) {
       error.value = errorMessage(caught);
     } finally {
@@ -170,6 +268,7 @@ export function useCourseBuilder() {
   async function selectCourse(courseId: string) {
     selectedCourseId.value = courseId;
     selectedNode.value = { type: "course" };
+    resetHistory();
     await refreshAuthoring();
   }
 
@@ -181,6 +280,7 @@ export function useCourseBuilder() {
       lastSavedAt.value = new Date().toISOString();
       await refreshCourses();
       await refreshAuthoring();
+      resetHistory();
     } catch (caught) {
       error.value = errorMessage(caught);
     } finally {
@@ -481,6 +581,8 @@ export function useCourseBuilder() {
     archiveLesson,
     archiveModule,
     authoring,
+    canRedo,
+    canUndo,
     courseForm,
     courses,
     createCourse,
@@ -500,10 +602,13 @@ export function useCourseBuilder() {
     publishCourse,
     publishLesson,
     publishModule,
+    recordHistory,
     readiness,
     readyToPublish,
     refreshAuthoring,
     refreshCourses,
+    redo,
+    resetHistory,
     restoreLesson,
     restoreModule,
     saveCourse,
@@ -518,6 +623,7 @@ export function useCourseBuilder() {
     selectedLesson,
     selectedModule,
     selectedNode,
-    total
+    total,
+    undo
   };
 }

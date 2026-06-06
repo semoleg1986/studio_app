@@ -12,9 +12,23 @@
       <span v-if="lastSavedAt" class="save-state">✓ Сохранено {{ formatTime(lastSavedAt) }}</span>
       <span v-else class="save-state">{{ mutating ? "Сохраняем..." : "Сохранено" }}</span>
       <button class="activity-button" type="button" title="Состояние">⌁</button>
-      <div class="history-buttons" aria-hidden="true">
-        <button type="button" disabled>↶</button>
-        <button type="button" disabled>↷</button>
+      <div class="history-buttons">
+        <button
+          type="button"
+          :disabled="!canUndo || mutating"
+          title="Отменить"
+          @click="$emit('undo')"
+        >
+          ↶
+        </button>
+        <button
+          type="button"
+          :disabled="!canRedo || mutating"
+          title="Повторить"
+          @click="$emit('redo')"
+        >
+          ↷
+        </button>
       </div>
       <button
         class="ghost-action"
@@ -44,9 +58,13 @@ import type { CoursePublishState } from "~/shared/types/course-authoring";
 defineEmits<{
   preview: [];
   publish: [];
+  redo: [];
+  undo: [];
 }>();
 
 defineProps<{
+  canRedo: boolean;
+  canUndo: boolean;
   lastSavedAt: string | null;
   mutating: boolean;
   readyToPublish: boolean;
