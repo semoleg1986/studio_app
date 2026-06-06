@@ -37,7 +37,9 @@
         >
           Опубликовать
         </button>
-        <button class="ghost-action" type="button" disabled>Предпросмотр</button>
+        <button class="ghost-action" type="button" :disabled="mutating" @click="$emit('preview')">
+          Предпросмотр
+        </button>
         <button class="danger-action" type="button" :disabled="mutating" @click="$emit('archive')">
           Архивировать
         </button>
@@ -64,6 +66,7 @@ type ReadinessItem = {
 
 defineEmits<{
   archive: [];
+  preview: [];
   publish: [];
 }>();
 

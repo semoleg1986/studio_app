@@ -27,6 +27,7 @@
         :mutating="mutating"
         :ready-to-publish="readyToPublish"
         :selected-course="selectedCourse"
+        @preview="previewOpen = true"
         @publish="publishCourse"
       />
 
@@ -97,10 +98,13 @@
           :ready-to-publish="readyToPublish"
           :selected-course="selectedCourse"
           @archive="archiveCourse"
+          @preview="previewOpen = true"
           @publish="publishCourse"
         />
       </div>
     </section>
+
+    <CoursePreviewDialog :authoring="authoring" :open="previewOpen" @close="previewOpen = false" />
   </main>
 </template>
 
@@ -112,12 +116,14 @@ import CourseBuilderToolbar from "~/features/course-builder/ui/CourseBuilderTool
 import CourseDetailsCard from "~/features/course-builder/ui/CourseDetailsCard.vue";
 import CourseInspector from "~/features/course-builder/ui/CourseInspector.vue";
 import CourseListPanel from "~/features/course-builder/ui/CourseListPanel.vue";
+import CoursePreviewDialog from "~/features/course-builder/ui/CoursePreviewDialog.vue";
 import CourseStructureEditor from "~/features/course-builder/ui/CourseStructureEditor.vue";
 import StudioNavigationRail from "~/features/course-builder/ui/StudioNavigationRail.vue";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
 
 const { user } = useAuthSession();
 const { resolvedTheme, setThemeMode, themeMode } = usePreferences();
+const previewOpen = ref(false);
 const {
   addLesson,
   addModule,

@@ -16,7 +16,14 @@
         <button type="button" disabled>↶</button>
         <button type="button" disabled>↷</button>
       </div>
-      <button class="ghost-action" type="button" :disabled="!selectedCourse">Предпросмотр</button>
+      <button
+        class="ghost-action"
+        type="button"
+        :disabled="!selectedCourse"
+        @click="$emit('preview')"
+      >
+        Предпросмотр
+      </button>
       <button
         class="primary-action toolbar-publish"
         type="button"
@@ -34,7 +41,10 @@
 import type { StudioCourse } from "~/features/course-builder/model/types";
 import type { CoursePublishState } from "~/shared/types/course-authoring";
 
-defineEmits<{ publish: [] }>();
+defineEmits<{
+  preview: [];
+  publish: [];
+}>();
 
 defineProps<{
   lastSavedAt: string | null;
