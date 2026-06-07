@@ -15,6 +15,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     authServiceBaseUrl: "http://localhost:8000",
+    commercialCatalogServiceBaseUrl: "http://localhost:8007",
+    commercialCatalogServiceToken: "dev-service-token",
     courseServiceBaseUrl: "http://localhost:8001",
     public: {
       apiBaseUrl: "/api",

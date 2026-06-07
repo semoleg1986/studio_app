@@ -4,6 +4,8 @@ import type {
   AdminCourseAuthoringResponse,
   AdminCourseListItem,
   AdminCourseListResponse,
+  StudioCourseOffer,
+  StudioCourseOffersResponse,
   CourseResponse
 } from "~/shared/types/course-authoring";
 
@@ -12,6 +14,8 @@ export type StudioCourseListResponse = AdminCourseListResponse;
 export type StudioCourseAuthoring = AdminCourseAuthoringResponse;
 export type StudioCourseModule = AdminCourseAuthoringModule;
 export type StudioCourseLesson = AdminCourseAuthoringLesson;
+export type StudioOffer = StudioCourseOffer;
+export type StudioCourseOfferListResponse = StudioCourseOffersResponse;
 
 export type CourseBuilderSelectedNode =
   | { type: "course" }
@@ -88,4 +92,14 @@ export interface ReorderModulesPayload {
 
 export interface ReorderLessonsPayload {
   items: ReorderLessonItemPayload[];
+}
+
+export interface UpsertDefaultOfferPayload {
+  currency: string;
+  description_short?: string | null;
+  is_active: boolean;
+  list_price: number;
+  offer_id?: string | null;
+  sale_price: number;
+  title: string;
 }

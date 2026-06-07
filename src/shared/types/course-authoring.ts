@@ -23,8 +23,6 @@ export interface CourseResponse {
   enrollment_opens_at_local: string | null;
   enrollment_closes_at: string | null;
   enrollment_closes_at_local: string | null;
-  price: number;
-  currency: string;
   language: string;
   age_min: number | null;
   age_max: number | null;
@@ -38,7 +36,6 @@ export interface CourseResponse {
   modules_count: number;
   lessons_total: number;
   estimated_duration_hours: number;
-  is_free: boolean;
   published_at: string | null;
   published_by_admin_id: string | null;
   archived_at: string | null;
@@ -55,8 +52,6 @@ export interface AdminCourseListItem {
   teacher_display_name: string | null;
   slug: string;
   publish_state: CoursePublishState;
-  price: number;
-  currency: string;
   modules_count: number;
   lessons_total: number;
   published_at: string | null;
@@ -132,4 +127,34 @@ export interface AdminCourseAuthoringResponse {
   version: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface StudioOfferMoney {
+  currency: string;
+  discount_reason: string | null;
+  list_price: number;
+  sale_price: number;
+}
+
+export interface StudioOfferFeatureFlags {
+  delivery_mode: string;
+  homework_review_included: boolean;
+  teacher_included: boolean;
+}
+
+export interface StudioCourseOffer {
+  course_id: string;
+  description_short: string | null;
+  feature_flags: StudioOfferFeatureFlags;
+  is_active: boolean;
+  is_default: boolean;
+  offer_code: string;
+  offer_id: string;
+  price: StudioOfferMoney;
+  title: string;
+}
+
+export interface StudioCourseOffersResponse {
+  course_id: string;
+  offers: StudioCourseOffer[];
 }

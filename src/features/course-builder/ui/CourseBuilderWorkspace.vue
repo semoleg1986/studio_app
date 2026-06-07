@@ -96,6 +96,8 @@
           :draft-version="draftVersion"
           :has-unpublished-changes="hasUnpublishedChanges"
           :mutating="mutating"
+          :default-offer="defaultOffer"
+          :offer-form="offerForm"
           :published-version="publishedVersion"
           :readiness="readiness"
           :readiness-percent="readinessPercent"
@@ -104,6 +106,8 @@
           @archive="archiveCourse"
           @preview="previewOpen = true"
           @publish="publishCourse"
+          @save-offer="saveDefaultOffer"
+          @update:offer-form="Object.assign(offerForm, $event)"
         />
       </div>
     </section>
@@ -141,6 +145,7 @@ const {
   courses,
   createCourse,
   createCourseForm,
+  defaultOffer,
   error,
   filter,
   hasUnpublishedChanges,
@@ -153,6 +158,7 @@ const {
   moveLesson,
   moveModule,
   mutating,
+  offerForm,
   publishCourse,
   publishLesson,
   publishModule,
@@ -165,6 +171,7 @@ const {
   restoreLesson,
   restoreModule,
   saveCourse,
+  saveDefaultOffer,
   saveLesson,
   saveModule,
   duplicateLesson,

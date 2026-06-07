@@ -20,6 +20,97 @@
         </ul>
       </section>
 
+      <section class="inspector-card offer-card">
+        <div>
+          <h2>Offer / Цена</h2>
+          <p class="offer-note">
+            Цена хранится в commercial catalog. Course service отвечает только за контент.
+          </p>
+        </div>
+
+        <div v-if="defaultOffer" class="offer-current">
+          <strong>{{ defaultOffer.title }}</strong>
+          <span>{{ defaultOffer.offer_id }}</span>
+          <span :class="['state-chip', defaultOffer.is_active ? 'state-chip--active' : '']">
+            {{ defaultOffer.is_active ? "Активен" : "Выключен" }}
+          </span>
+        </div>
+        <div v-else class="offer-current offer-current--empty">
+          <strong>Default offer не настроен</strong>
+          <span>После сохранения курс сможет пройти readiness check по offer.</span>
+        </div>
+
+        <label class="offer-field">
+          <span>Название</span>
+          <input
+            :value="offerForm.title"
+            type="text"
+            @input="patchOffer({ title: ($event.target as HTMLInputElement).value })"
+          />
+        </label>
+
+        <label class="offer-field">
+          <span>Описание</span>
+          <textarea
+            :value="offerForm.description_short"
+            rows="2"
+            @input="patchOffer({ description_short: ($event.target as HTMLTextAreaElement).value })"
+          />
+        </label>
+
+        <div class="offer-grid">
+          <label class="offer-field">
+            <span>Валюта</span>
+            <input
+              :value="offerForm.currency"
+              maxlength="3"
+              type="text"
+              @input="patchOffer({ currency: ($event.target as HTMLInputElement).value })"
+            />
+          </label>
+
+          <label class="offer-field">
+            <span>List price</span>
+            <input
+              :value="offerForm.list_price"
+              min="0"
+              step="0.01"
+              type="number"
+              @input="patchOffer({ list_price: Number(($event.target as HTMLInputElement).value) })"
+            />
+          </label>
+
+          <label class="offer-field">
+            <span>Sale price</span>
+            <input
+              :value="offerForm.sale_price"
+              min="0"
+              step="0.01"
+              type="number"
+              @input="patchOffer({ sale_price: Number(($event.target as HTMLInputElement).value) })"
+            />
+          </label>
+        </div>
+
+        <label class="offer-toggle">
+          <input
+            :checked="offerForm.is_active"
+            type="checkbox"
+            @change="patchOffer({ is_active: ($event.target as HTMLInputElement).checked })"
+          />
+          <span>Offer активен</span>
+        </label>
+
+        <button
+          class="primary-action"
+          type="button"
+          :disabled="mutating"
+          @click="$emit('saveOffer')"
+        >
+          Сохранить offer
+        </button>
+      </section>
+
       <section class="inspector-card status-card">
         <h2>Статус</h2>
         <span class="state-chip" :data-state="selectedCourse.publish_state">
@@ -55,7 +146,11 @@
 </template>
 
 <script setup lang="ts">
-import type { StudioCourse, StudioCourseAuthoring } from "~/features/course-builder/model/types";
+import type {
+  StudioCourse,
+  StudioCourseAuthoring,
+  StudioOffer
+} from "~/features/course-builder/model/types";
 import type { CoursePublishState } from "~/shared/types/course-authoring";
 
 type ReadinessItem = {
@@ -64,23 +159,40 @@ type ReadinessItem = {
   label: string;
 };
 
-defineEmits<{
-  archive: [];
-  preview: [];
-  publish: [];
-}>();
+type OfferForm = {
+  currency: string;
+  description_short: string;
+  is_active: boolean;
+  list_price: number;
+  sale_price: number;
+  title: string;
+};
 
 defineProps<{
   authoring: StudioCourseAuthoring | null;
+  defaultOffer: StudioOffer | null;
   draftVersion: number | string;
   hasUnpublishedChanges: boolean;
   mutating: boolean;
+  offerForm: OfferForm;
   publishedVersion: number | string | null;
   readiness: ReadinessItem[];
   readinessPercent: number;
   readyToPublish: boolean;
   selectedCourse: StudioCourse | null;
 }>();
+
+const emit = defineEmits<{
+  archive: [];
+  preview: [];
+  publish: [];
+  saveOffer: [];
+  "update:offerForm": [patch: Partial<OfferForm>];
+}>();
+
+function patchOffer(patch: Partial<OfferForm>) {
+  emit("update:offerForm", patch);
+}
 
 function stateLabel(state: CoursePublishState) {
   const labels: Record<string, string> = {
@@ -192,6 +304,69 @@ function stateLabel(state: CoursePublishState) {
   color: var(--studio-muted);
 }
 
+.offer-note {
+  margin: 0.25rem 0 0;
+  color: var(--studio-muted);
+  font-size: 0.84rem;
+}
+
+.offer-current {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.82rem;
+  border: 1px solid var(--studio-line);
+  border-radius: 14px;
+  background: var(--studio-control-bg);
+}
+
+.offer-current > span {
+  overflow-wrap: anywhere;
+  color: var(--studio-muted);
+  font-size: 0.78rem;
+}
+
+.offer-current--empty {
+  border-style: dashed;
+}
+
+.offer-field {
+  display: grid;
+  gap: 0.42rem;
+  color: var(--studio-muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.offer-field input,
+.offer-field textarea {
+  width: 100%;
+  border: 1px solid var(--studio-line);
+  border-radius: 12px;
+  background: var(--studio-control-bg);
+  color: var(--studio-text);
+  font: inherit;
+  min-height: 42px;
+  padding: 0.68rem 0.78rem;
+}
+
+.offer-field textarea {
+  resize: vertical;
+}
+
+.offer-grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.offer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--studio-soft);
+  font-weight: 900;
+}
+
 .state-chip {
   width: fit-content;
   border: 1px solid var(--studio-line);
@@ -209,6 +384,10 @@ function stateLabel(state: CoursePublishState) {
 
 .state-chip[data-state="archived"] {
   color: var(--studio-dim);
+}
+
+.state-chip--active {
+  color: var(--studio-success);
 }
 
 .primary-action,
@@ -257,6 +436,12 @@ function stateLabel(state: CoursePublishState) {
   .inspector-panel {
     border-left: 0;
     border-top: 1px solid var(--studio-line);
+  }
+}
+
+@media (max-width: 620px) {
+  .offer-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

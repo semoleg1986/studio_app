@@ -57,6 +57,14 @@
   - `POST /api/admin/courses/:courseId/modules/:moduleId/lessons/:lessonId/archive`;
   - `POST /api/admin/courses/:courseId/modules/:moduleId/lessons/:lessonId/duplicate`;
   - `POST /api/admin/courses/:courseId/modules/:moduleId/lessons/reorder`.
+- Course offer editing is proxied server-side:
+  - `GET /api/admin/courses/:courseId/offers` ->
+    `commercial_catalog_service` `GET /internal/v1/courses/:courseId/offers`;
+  - `POST /api/admin/courses/:courseId/offers/default` ->
+    `commercial_catalog_service` `POST /internal/v1/course-offers`;
+  - before every offer proxy call, Studio checks
+    `course_service` `GET /v1/admin/courses/:courseId/authoring`, so course
+    authoring permissions remain owned by `course_service`.
 - Studio invite onboarding:
   - `/invite/accept?token=<token>` is a public auth page;
   - `POST /api/auth/invites/accept` -> `POST /v1/auth/invites/accept`;

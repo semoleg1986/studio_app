@@ -6,11 +6,14 @@ import type {
   CreateCoursePayload,
   ReorderLessonsPayload,
   ReorderModulesPayload,
+  StudioOffer,
+  StudioCourseOfferListResponse,
   StudioCourseAuthoring,
   StudioCourseListResponse,
   UpdateCoursePayload,
   UpdateLessonPayload,
-  UpdateModulePayload
+  UpdateModulePayload,
+  UpsertDefaultOfferPayload
 } from "~/features/course-builder/model/types";
 
 export function useCourseBuilderClient() {
@@ -30,6 +33,17 @@ export function useCourseBuilderClient() {
     getAuthoring(courseId: string) {
       return api.get<StudioCourseAuthoring>(
         `/admin/courses/${encodeURIComponent(courseId)}/authoring`
+      );
+    },
+    listCourseOffers(courseId: string) {
+      return api.get<StudioCourseOfferListResponse>(
+        `/admin/courses/${encodeURIComponent(courseId)}/offers`
+      );
+    },
+    upsertDefaultOffer(courseId: string, payload: UpsertDefaultOfferPayload) {
+      return api.post<StudioOffer, UpsertDefaultOfferPayload>(
+        `/admin/courses/${encodeURIComponent(courseId)}/offers/default`,
+        payload
       );
     },
     createCourse(payload: CreateCoursePayload) {

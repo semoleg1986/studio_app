@@ -7,9 +7,11 @@ import type {
   StudioCourseAuthoring,
   StudioCourseLesson,
   StudioCourseModule,
+  StudioOffer,
   UpdateCoursePayload,
   UpdateLessonPayload,
-  UpdateModulePayload
+  UpdateModulePayload,
+  UpsertDefaultOfferPayload
 } from "~/features/course-builder/model/types";
 import { useAuthSession } from "~/features/auth";
 import { ApiRequestError } from "~/shared/api/types";
@@ -32,6 +34,15 @@ type LessonFormState = {
   description: string;
   duration_minutes: number;
   is_preview: boolean;
+  title: string;
+};
+
+type OfferFormState = {
+  currency: string;
+  description_short: string;
+  is_active: boolean;
+  list_price: number;
+  sale_price: number;
   title: string;
 };
 
@@ -69,6 +80,7 @@ export function useCourseBuilder() {
 
   const courses = ref<StudioCourse[]>([]);
   const authoring = ref<StudioCourseAuthoring | null>(null);
+  const courseOffers = ref<StudioOffer[]>([]);
   const selectedCourseId = ref<string | null>(null);
   const selectedNode = ref<CourseBuilderSelectedNode>({ type: "course" });
   const filter = ref<CourseFilter>("all");
@@ -106,8 +118,18 @@ export function useCourseBuilder() {
     is_preview: false
   });
 
+  const offerForm = reactive<OfferFormState>({
+    currency: "USD",
+    description_short: "",
+    is_active: true,
+    list_price: 0,
+    sale_price: 0,
+    title: "Standard offer"
+  });
+
   const total = computed(() => courses.value.length);
   const selectedCourse = computed(() => authoring.value?.course ?? null);
+  const defaultOffer = computed(() => courseOffers.value.find((offer) => offer.is_default) ?? null);
   const modules = computed(() => authoring.value?.modules ?? []);
   const selectedModule = computed<StudioCourseModule | null>(() => {
     if (selectedNode.value.type === "module" || selectedNode.value.type === "lesson") {
@@ -151,6 +173,15 @@ export function useCourseBuilder() {
     courseForm.title = value.course.title;
     courseForm.description = value.course.description ?? "";
     courseForm.level = value.course.level;
+  });
+
+  watch(defaultOffer, (offer) => {
+    offerForm.title = offer?.title ?? "Standard offer";
+    offerForm.description_short = offer?.description_short ?? "";
+    offerForm.currency = offer?.price.currency ?? "USD";
+    offerForm.list_price = offer?.price.list_price ?? 0;
+    offerForm.sale_price = offer?.price.sale_price ?? 0;
+    offerForm.is_active = offer?.is_active ?? true;
   });
 
   function cloneState<T>(value: T): T {
@@ -252,12 +283,22 @@ export function useCourseBuilder() {
     error.value = null;
     try {
       authoring.value = await api.getAuthoring(selectedCourseId.value);
+      await refreshCourseOffers();
       resetHistory();
     } catch (caught) {
       error.value = errorMessage(caught);
     } finally {
       loadingAuthoring.value = false;
     }
+  }
+
+  async function refreshCourseOffers() {
+    if (!selectedCourseId.value) {
+      courseOffers.value = [];
+      return;
+    }
+    const response = await api.listCourseOffers(selectedCourseId.value);
+    courseOffers.value = response.offers;
   }
 
   async function selectCourse(courseId: string) {
@@ -320,6 +361,39 @@ export function useCourseBuilder() {
       language: "ru"
     };
     await runMutation(() => api.updateCourse(selectedCourseId.value as string, payload));
+  }
+
+  async function saveDefaultOffer() {
+    if (!selectedCourseId.value) {
+      return;
+    }
+    const title = offerForm.title.trim();
+    if (!title) {
+      error.value = "Введите название offer";
+      return;
+    }
+    const listPrice = Number(offerForm.list_price);
+    const salePrice = Number(offerForm.sale_price);
+    if (!Number.isFinite(listPrice) || !Number.isFinite(salePrice)) {
+      error.value = "Цена должна быть числом";
+      return;
+    }
+    if (listPrice < 0 || salePrice < 0 || salePrice > listPrice) {
+      error.value = "Цена должна быть >= 0, sale price не может быть выше list price";
+      return;
+    }
+
+    const payload: UpsertDefaultOfferPayload = {
+      currency: offerForm.currency.trim().toUpperCase() || "USD",
+      description_short: offerForm.description_short.trim() || null,
+      is_active: offerForm.is_active,
+      list_price: listPrice,
+      offer_id: defaultOffer.value?.offer_id ?? null,
+      sale_price: salePrice,
+      title
+    };
+
+    await runMutation(() => api.upsertDefaultOffer(selectedCourseId.value as string, payload));
   }
 
   async function addModule() {
@@ -574,11 +648,13 @@ export function useCourseBuilder() {
     canRedo,
     canUndo,
     courseForm,
+    courseOffers,
     courses,
     createCourse,
     createCourseForm,
     error,
     filter,
+    defaultOffer,
     hasUnpublishedChanges,
     lastSavedAt,
     lessonForm,
@@ -592,16 +668,19 @@ export function useCourseBuilder() {
     publishCourse,
     publishLesson,
     publishModule,
+    offerForm,
     recordHistory,
     readiness,
     readyToPublish,
     refreshAuthoring,
+    refreshCourseOffers,
     refreshCourses,
     redo,
     resetHistory,
     restoreLesson,
     restoreModule,
     saveCourse,
+    saveDefaultOffer,
     saveLesson,
     saveModule,
     duplicateLesson,
