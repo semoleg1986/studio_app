@@ -39,7 +39,18 @@
           </button>
         </div>
       </div>
-      <span class="rail-user">{{ userInitial }}</span>
+      <div class="rail-user-wrap">
+        <span class="rail-user">{{ userInitial }}</span>
+        <button
+          class="rail-logout"
+          type="button"
+          title="Выйти"
+          :disabled="authPending"
+          @click="$emit('logout')"
+        >
+          ↩
+        </button>
+      </div>
     </div>
   </aside>
 </template>
@@ -47,9 +58,13 @@
 <script setup lang="ts">
 import type { ThemeMode } from "~/shared/lib/preferences/types";
 
-const emit = defineEmits<{ "set-theme": [theme: ThemeMode] }>();
+const emit = defineEmits<{
+  logout: [];
+  "set-theme": [theme: ThemeMode];
+}>();
 
 defineProps<{
+  authPending: boolean;
   themeMode: ThemeMode;
   userInitial: string;
 }>();
@@ -75,7 +90,8 @@ function setTheme(theme: ThemeMode) {
 
 .rail-logo,
 .rail-user,
-.rail-action {
+.rail-action,
+.rail-logout {
   display: grid;
   place-items: center;
 }
@@ -146,6 +162,34 @@ function setTheme(theme: ThemeMode) {
   background: var(--studio-panel-3);
   color: var(--studio-accent);
   font-weight: 1000;
+}
+
+.rail-user-wrap {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+}
+
+.rail-logout {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--studio-line);
+  border-radius: 12px;
+  background: var(--studio-control-bg);
+  color: var(--studio-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 160ms ease;
+}
+
+.rail-logout:hover {
+  border-color: rgb(237 138 125 / 0.34);
+  color: var(--studio-danger);
+}
+
+.rail-logout:disabled {
+  cursor: wait;
+  opacity: 0.45;
 }
 
 .settings-popover {

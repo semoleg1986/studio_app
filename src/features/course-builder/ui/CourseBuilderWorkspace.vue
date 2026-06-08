@@ -1,8 +1,10 @@
 <template>
   <main :class="['studio-shell', `studio-shell--${resolvedTheme}`]">
     <StudioNavigationRail
+      :auth-pending="authPending"
       :theme-mode="themeMode"
       :user-initial="userInitial"
+      @logout="onLogout"
       @set-theme="setThemeMode"
     />
 
@@ -129,7 +131,7 @@ import CourseStructureEditor from "~/features/course-builder/ui/CourseStructureE
 import StudioNavigationRail from "~/features/course-builder/ui/StudioNavigationRail.vue";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
 
-const { user } = useAuthSession();
+const { logout, pending: authPending, user } = useAuthSession();
 const { resolvedTheme, setThemeMode, themeMode } = usePreferences();
 const previewOpen = ref(false);
 const {
@@ -229,6 +231,11 @@ function patchSelectedLesson(
     recordHistory();
     Object.assign(selectedLesson.value, patch);
   }
+}
+
+async function onLogout() {
+  await logout();
+  await navigateTo("/login");
 }
 </script>
 
