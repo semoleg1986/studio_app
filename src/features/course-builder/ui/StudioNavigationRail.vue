@@ -40,15 +40,15 @@
         </div>
       </div>
       <div class="rail-user-wrap">
-        <span class="rail-user">{{ userInitial }}</span>
         <button
-          class="rail-logout"
+          class="rail-user"
           type="button"
           title="Выйти"
           :disabled="authPending"
           @click="$emit('logout')"
         >
-          ↩
+          <span>{{ userInitial }}</span>
+          <span class="rail-user-exit" aria-hidden="true"> ↩ </span>
         </button>
       </div>
     </div>
@@ -90,8 +90,7 @@ function setTheme(theme: ThemeMode) {
 
 .rail-logo,
 .rail-user,
-.rail-action,
-.rail-logout {
+.rail-action {
   display: grid;
   place-items: center;
 }
@@ -156,40 +155,48 @@ function setTheme(theme: ThemeMode) {
 }
 
 .rail-user {
+  position: relative;
   width: 36px;
   height: 36px;
+  border: 1px solid transparent;
   border-radius: 14px;
   background: var(--studio-panel-3);
   color: var(--studio-accent);
-  font-weight: 1000;
-}
-
-.rail-user-wrap {
-  display: grid;
-  gap: 0.45rem;
-  justify-items: center;
-}
-
-.rail-logout {
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--studio-line);
-  border-radius: 12px;
-  background: var(--studio-control-bg);
-  color: var(--studio-muted);
   cursor: pointer;
-  font-size: 1rem;
+  font: inherit;
+  font-weight: 1000;
   transition: all 160ms ease;
 }
 
-.rail-logout:hover {
+.rail-user:hover {
   border-color: rgb(237 138 125 / 0.34);
   color: var(--studio-danger);
 }
 
-.rail-logout:disabled {
+.rail-user:disabled {
   cursor: wait;
-  opacity: 0.45;
+  opacity: 0.55;
+}
+
+.rail-user-exit {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  border: 1px solid var(--studio-line);
+  border-radius: 999px;
+  background: var(--studio-control-bg);
+  color: var(--studio-muted);
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.rail-user-wrap {
+  display: grid;
+  justify-items: center;
 }
 
 .settings-popover {
