@@ -67,7 +67,10 @@
     authoring permissions remain owned by `course_service`;
   - offer reads are allowed for Studio users with course authoring access;
   - offer writes are admin-only because price/offer state is commercial policy,
-    not teacher/content authoring.
+    not teacher/content authoring;
+  - offer writes forward `X-Actor-User-Id` and `X-Actor-Roles` to
+    `commercial_catalog_service`; the catalog service also rejects non-admin
+    actors, so the commercial write rule is enforced beyond the Studio UI.
 - Studio invite onboarding:
   - `/invite/accept?token=<token>` is a public auth page;
   - `POST /api/auth/invites/accept` -> `POST /v1/auth/invites/accept`;

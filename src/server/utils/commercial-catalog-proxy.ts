@@ -5,6 +5,11 @@ import { exchangeRefreshToken } from "~/server/utils/auth-proxy";
 import { getAccessToken } from "~/server/utils/auth-session";
 
 interface CatalogProxyOptions {
+  actor?: {
+    email?: string;
+    roles: string[];
+    userId: string;
+  };
   body?: unknown;
   method?: string;
 }
@@ -102,6 +107,13 @@ export async function proxyCommercialCatalogJson<TResponse>(
     Accept: "application/json",
     "X-Service-Token": catalogServiceToken(event)
   });
+  if (options.actor) {
+    headers.set("X-Actor-User-Id", options.actor.userId);
+    headers.set("X-Actor-Roles", options.actor.roles.join(","));
+    if (options.actor.email) {
+      headers.set("X-Actor-Email", options.actor.email);
+    }
+  }
   if (body !== undefined) {
     headers.set("Content-Type", "application/json");
   }

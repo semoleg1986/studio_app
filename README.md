@@ -28,7 +28,8 @@ Key variables:
 - `NUXT_AUTH_COOKIE_SECURE`
 - `NUXT_COMMERCIAL_CATALOG_SERVICE_BASE_URL`
 - `NUXT_COMMERCIAL_CATALOG_SERVICE_TOKEN` server-side only, used by Studio API
-  proxy to create/update course offers. Offer write actions are admin-only.
+  proxy to create/update course offers. Offer write actions are admin-only; the
+  proxy forwards actor headers to `commercial_catalog_service`.
 - `NUXT_COURSE_SERVICE_BASE_URL`
 - `NUXT_PUBLIC_API_BASE_URL`
 - `NUXT_PUBLIC_SITE_URL`

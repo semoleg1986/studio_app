@@ -65,6 +65,11 @@ export default defineEventHandler(async (event) => {
   const salePrice = Number(body.sale_price ?? listPrice);
 
   return await proxyCommercialCatalogJson<StudioCourseOffer>(event, "/internal/v1/course-offers", {
+    actor: {
+      email: user.email,
+      roles: user.roles,
+      userId: user.user_id
+    },
     body: {
       course_id: courseId,
       currency,
