@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { hasStudioAccess } from "~/features/auth";
+import { canManageCourseOffers, hasStudioAccess } from "~/features/auth";
 import type { AuthMe, AuthRole } from "~/features/auth";
 
 function userWithRoles(roles: AuthRole[]): AuthMe {
@@ -24,5 +24,14 @@ describe("hasStudioAccess", () => {
     expect(hasStudioAccess(userWithRoles(["parent"]))).toBe(false);
     expect(hasStudioAccess(userWithRoles(["student"]))).toBe(false);
     expect(hasStudioAccess(null)).toBe(false);
+  });
+});
+
+describe("canManageCourseOffers", () => {
+  it("allows only admins to manage course offers", () => {
+    expect(canManageCourseOffers(userWithRoles(["admin"]))).toBe(true);
+    expect(canManageCourseOffers(userWithRoles(["teacher"]))).toBe(false);
+    expect(canManageCourseOffers(userWithRoles(["content_manager"]))).toBe(false);
+    expect(canManageCourseOffers(userWithRoles(["student"]))).toBe(false);
   });
 });

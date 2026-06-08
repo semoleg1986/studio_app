@@ -22,7 +22,7 @@
 
       <section class="inspector-card offer-card">
         <div>
-          <h2>Offer / Цена</h2>
+          <h2>{{ canManageOffers ? "Настроить цену и offer" : "Offer / Цена" }}</h2>
           <p class="offer-note">
             Цена хранится в commercial catalog. Course service отвечает только за контент.
           </p>
@@ -40,75 +40,93 @@
           <span>После сохранения курс сможет пройти readiness check по offer.</span>
         </div>
 
-        <label class="offer-field">
-          <span>Название</span>
-          <input
-            :value="offerForm.title"
-            type="text"
-            @input="patchOffer({ title: ($event.target as HTMLInputElement).value })"
-          />
-        </label>
-
-        <label class="offer-field">
-          <span>Описание</span>
-          <textarea
-            :value="offerForm.description_short"
-            rows="2"
-            @input="patchOffer({ description_short: ($event.target as HTMLTextAreaElement).value })"
-          />
-        </label>
-
-        <div class="offer-grid">
+        <template v-if="canManageOffers">
           <label class="offer-field">
-            <span>Валюта</span>
+            <span>Название</span>
             <input
-              :value="offerForm.currency"
-              maxlength="3"
+              :value="offerForm.title"
               type="text"
-              @input="patchOffer({ currency: ($event.target as HTMLInputElement).value })"
+              @input="patchOffer({ title: ($event.target as HTMLInputElement).value })"
             />
           </label>
 
           <label class="offer-field">
-            <span>List price</span>
-            <input
-              :value="offerForm.list_price"
-              min="0"
-              step="0.01"
-              type="number"
-              @input="patchOffer({ list_price: Number(($event.target as HTMLInputElement).value) })"
+            <span>Описание</span>
+            <textarea
+              :value="offerForm.description_short"
+              rows="2"
+              @input="
+                patchOffer({ description_short: ($event.target as HTMLTextAreaElement).value })
+              "
             />
           </label>
 
-          <label class="offer-field">
-            <span>Sale price</span>
+          <div class="offer-grid">
+            <label class="offer-field">
+              <span>Валюта</span>
+              <input
+                :value="offerForm.currency"
+                maxlength="3"
+                type="text"
+                @input="patchOffer({ currency: ($event.target as HTMLInputElement).value })"
+              />
+            </label>
+
+            <label class="offer-field">
+              <span>List price</span>
+              <input
+                :value="offerForm.list_price"
+                min="0"
+                step="0.01"
+                type="number"
+                @input="
+                  patchOffer({ list_price: Number(($event.target as HTMLInputElement).value) })
+                "
+              />
+            </label>
+
+            <label class="offer-field">
+              <span>Sale price</span>
+              <input
+                :value="offerForm.sale_price"
+                min="0"
+                step="0.01"
+                type="number"
+                @input="
+                  patchOffer({ sale_price: Number(($event.target as HTMLInputElement).value) })
+                "
+              />
+            </label>
+          </div>
+
+          <label class="offer-toggle">
             <input
-              :value="offerForm.sale_price"
-              min="0"
-              step="0.01"
-              type="number"
-              @input="patchOffer({ sale_price: Number(($event.target as HTMLInputElement).value) })"
+              :checked="offerForm.is_active"
+              type="checkbox"
+              @change="patchOffer({ is_active: ($event.target as HTMLInputElement).checked })"
             />
+            <span>Offer активен</span>
           </label>
+
+          <button
+            class="primary-action"
+            type="button"
+            :disabled="mutating"
+            @click="$emit('saveOffer')"
+          >
+            Сохранить offer
+          </button>
+        </template>
+        <div v-else class="offer-delegation">
+          <strong>{{ defaultOffer ? "Offer настроен" : "Offer не настроен" }}</strong>
+          <span>
+            {{
+              defaultOffer
+                ? "Цена и активность offer управляются администратором/коммерческим менеджером."
+                : "Передайте курс администратору/коммерческому менеджеру."
+            }}
+          </span>
         </div>
-
-        <label class="offer-toggle">
-          <input
-            :checked="offerForm.is_active"
-            type="checkbox"
-            @change="patchOffer({ is_active: ($event.target as HTMLInputElement).checked })"
-          />
-          <span>Offer активен</span>
-        </label>
-
-        <button
-          class="primary-action"
-          type="button"
-          :disabled="mutating"
-          @click="$emit('saveOffer')"
-        >
-          Сохранить offer
-        </button>
       </section>
 
       <section class="inspector-card status-card">
@@ -170,6 +188,7 @@ type OfferForm = {
 
 defineProps<{
   authoring: StudioCourseAuthoring | null;
+  canManageOffers: boolean;
   defaultOffer: StudioOffer | null;
   draftVersion: number | string;
   hasUnpublishedChanges: boolean;
@@ -327,6 +346,21 @@ function stateLabel(state: CoursePublishState) {
 
 .offer-current--empty {
   border-style: dashed;
+}
+
+.offer-delegation {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.82rem;
+  border: 1px solid rgb(228 185 102 / 0.36);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--studio-warning) 9%, var(--studio-control-bg));
+  color: var(--studio-soft);
+}
+
+.offer-delegation span {
+  color: var(--studio-muted);
+  font-size: 0.84rem;
 }
 
 .offer-field {

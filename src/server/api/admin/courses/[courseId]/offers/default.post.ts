@@ -1,7 +1,9 @@
-import { getRouterParam, readBody, setResponseStatus } from "h3";
+import { getRouterParam, readBody, setHeader, setResponseStatus } from "h3";
 
+import { canManageCourseOffers } from "~/features/auth";
 import { proxyCommercialCatalogJson } from "~/server/utils/commercial-catalog-proxy";
 import { proxyCourseServiceJson } from "~/server/utils/course-service-proxy";
+import { proxyMe } from "~/server/utils/auth-proxy";
 import type { StudioCourseOffer } from "~/shared/types/course-authoring";
 
 interface UpsertDefaultOfferBody {
@@ -24,6 +26,24 @@ export default defineEventHandler(async (event) => {
       status: 400,
       title: "Bad Request",
       type: "/problems/validation"
+    };
+  }
+
+  const user = await proxyMe(event);
+
+  if (!("roles" in user)) {
+    return user;
+  }
+
+  if (!canManageCourseOffers(user)) {
+    setResponseStatus(event, 403, "Forbidden");
+    setHeader(event, "Content-Type", "application/problem+json");
+    return {
+      detail: "Offer management requires admin role.",
+      instance: `/api/admin/courses/${encodeURIComponent(courseId)}/offers/default`,
+      status: 403,
+      title: "Access denied",
+      type: "https://api.example.com/problems/access-denied"
     };
   }
 

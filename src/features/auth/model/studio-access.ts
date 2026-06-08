@@ -5,3 +5,7 @@ export const STUDIO_ROLES: readonly AuthRole[] = ["admin", "teacher", "content_m
 export function hasStudioAccess(user: AuthMe | null | undefined): boolean {
   return Boolean(user?.roles.some((role) => STUDIO_ROLES.includes(role)));
 }
+
+export function canManageCourseOffers(user: AuthMe | null | undefined): boolean {
+  return Boolean(user?.roles.includes("admin"));
+}

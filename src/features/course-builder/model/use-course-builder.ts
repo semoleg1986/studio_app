@@ -13,7 +13,7 @@ import type {
   UpdateModulePayload,
   UpsertDefaultOfferPayload
 } from "~/features/course-builder/model/types";
-import { useAuthSession } from "~/features/auth";
+import { canManageCourseOffers, useAuthSession } from "~/features/auth";
 import { ApiRequestError } from "~/shared/api/types";
 
 type CourseFilter = "all" | "draft" | "published" | "archived";
@@ -159,6 +159,7 @@ export function useCourseBuilder() {
   });
   const readyToPublish = computed(() => authoring.value?.readiness.ready_to_publish ?? false);
   const hasUnpublishedChanges = computed(() => authoring.value?.has_unpublished_changes ?? false);
+  const canManageOffers = computed(() => canManageCourseOffers(user.value));
   const canUndo = computed(() => undoStack.value.length > 0);
   const canRedo = computed(() => redoStack.value.length > 0);
 
@@ -646,6 +647,7 @@ export function useCourseBuilder() {
     archiveModule,
     authoring,
     canRedo,
+    canManageOffers,
     canUndo,
     courseForm,
     courseOffers,

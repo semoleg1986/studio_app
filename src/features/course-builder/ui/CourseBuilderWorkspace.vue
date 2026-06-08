@@ -95,6 +95,7 @@
 
         <CourseInspector
           :authoring="authoring"
+          :can-manage-offers="canManageOffers"
           :draft-version="draftVersion"
           :has-unpublished-changes="hasUnpublishedChanges"
           :mutating="mutating"
@@ -141,6 +142,7 @@ const {
   archiveLesson,
   archiveModule,
   authoring,
+  canManageOffers,
   canRedo,
   canUndo,
   courseForm,
