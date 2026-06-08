@@ -1,5 +1,5 @@
 import { defineNuxtRouteMiddleware, navigateTo } from "#app";
-import { useAuthSession } from "~/features/auth";
+import { hasStudioAccess, useAuthSession } from "~/features/auth";
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (to.path.startsWith("/login") || to.path.startsWith("/invite/accept")) {
@@ -11,5 +11,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!user) {
     return navigateTo("/login");
+  }
+
+  if (!hasStudioAccess(user)) {
+    return navigateTo("/login?denied=role");
   }
 });

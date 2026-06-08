@@ -45,15 +45,16 @@
 
 <script setup lang="ts">
 import { ApiRequestError } from "~/shared/api/types";
-import { useAuthSession } from "~/features/auth";
+import { hasStudioAccess, useAuthSession } from "~/features/auth";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
 import UiButton from "~/shared/ui/UiButton.vue";
 import UiCard from "~/shared/ui/UiCard.vue";
 
+const route = useRoute();
 const email = ref("");
 const password = ref("");
 const errorMessage = ref("");
-const { bootstrap, isAuthenticated, login, pending } = useAuthSession();
+const { bootstrap, isAuthenticated, login, pending, user } = useAuthSession();
 const { t } = usePreferences();
 
 useSeoMeta({
@@ -63,7 +64,12 @@ useSeoMeta({
 
 onMounted(async () => {
   await bootstrap();
-  if (isAuthenticated.value) {
+
+  if (route.query.denied === "role") {
+    errorMessage.value = t("login.roleDenied");
+  }
+
+  if (isAuthenticated.value && hasStudioAccess(user.value)) {
     await navigateTo("/");
   }
 });
@@ -77,6 +83,12 @@ async function onSubmit() {
       password: password.value,
       session_fingerprint: "studio-login"
     });
+
+    if (!hasStudioAccess(user.value)) {
+      errorMessage.value = t("login.roleDenied");
+      return;
+    }
+
     await navigateTo("/");
   } catch (error) {
     if (error instanceof ApiRequestError) {

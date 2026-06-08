@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { ApiRequestError } from "~/shared/api/types";
-import { useAuthSession } from "~/features/auth";
+import { hasStudioAccess, useAuthSession } from "~/features/auth";
 import { usePreferences } from "~/shared/lib/preferences/use-preferences";
 import UiButton from "~/shared/ui/UiButton.vue";
 import UiCard from "~/shared/ui/UiCard.vue";
@@ -57,7 +57,7 @@ const route = useRoute();
 const password = ref("");
 const passwordConfirm = ref("");
 const errorMessage = ref("");
-const { acceptInvite, bootstrap, isAuthenticated, pending } = useAuthSession();
+const { acceptInvite, bootstrap, isAuthenticated, pending, user } = useAuthSession();
 const { t } = usePreferences();
 
 const inviteToken = computed(() => {
@@ -78,7 +78,7 @@ useSeoMeta({
 onMounted(async () => {
   await bootstrap();
 
-  if (isAuthenticated.value) {
+  if (isAuthenticated.value && hasStudioAccess(user.value)) {
     await navigateTo("/");
   }
 });
@@ -107,6 +107,12 @@ async function onSubmit() {
       session_fingerprint: "studio-invite-accept",
       token: inviteToken.value
     });
+
+    if (!hasStudioAccess(user.value)) {
+      errorMessage.value = t("login.roleDenied");
+      return;
+    }
+
     await navigateTo("/");
   } catch (error) {
     if (error instanceof ApiRequestError) {
